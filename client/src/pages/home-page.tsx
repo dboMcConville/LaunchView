@@ -1,12 +1,10 @@
 import { useAuth } from "@/hooks/use-auth";
 import { SidebarNav } from "@/components/ui/sidebar-nav";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Link } from "wouter";
-import { Wallet, Users, DollarSign } from "lucide-react";
+import { Wallet, Users } from "lucide-react";
 
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
@@ -47,7 +45,12 @@ export default function HomePage() {
                     <div className="flex items-center gap-2">
                       <Wallet className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm flex items-center gap-1">
-                        Marketing Budget: {Number(coin.marketingWalletBalance).toLocaleString()} <DollarSign className="h-4 w-4" />
+                        Marketing Budget: {Number(coin.marketingWalletBalance).toLocaleString()} 
+                        <img 
+                          src="/node_modules/cryptocurrency-icons/svg/color/usdc.svg" 
+                          alt="USDC"
+                          className="h-4 w-4"
+                        />
                       </span>
                     </div>
 
