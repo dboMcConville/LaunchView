@@ -8,7 +8,7 @@ import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertCoinSchema } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 export default function CreatePage() {
@@ -23,6 +23,8 @@ export default function CreatePage() {
   const createCoin = async (data: any) => {
     try {
       await apiRequest("POST", "/api/coins", data);
+      // Invalidate the coins query to trigger a refetch
+      queryClient.invalidateQueries({ queryKey: ["/api/coins"] });
       toast({
         title: "Success",
         description: "Your coin has been created successfully. A marketing wallet has been automatically generated.",
