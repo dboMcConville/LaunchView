@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, numeric } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -14,6 +14,7 @@ export const coins = pgTable("coins", {
   name: text("name").notNull(),
   symbol: text("symbol").notNull(),
   marketingWalletAddress: text("marketing_wallet_address").notNull(),
+  marketingWalletBalance: numeric("marketing_wallet_balance").notNull().default("0"),
   creatorId: integer("creator_id").notNull(),
 });
 

@@ -47,9 +47,7 @@ export default function HomePage() {
                     <div className="flex items-center gap-2">
                       <Wallet className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm">
-                        {coin.marketingWalletAddress 
-                          ? "Marketing Wallet Active" 
-                          : "No Marketing Wallet"}
+                        Marketing Budget: {Number(coin.marketingWalletBalance).toLocaleString()} USDC
                       </span>
                     </div>
 
