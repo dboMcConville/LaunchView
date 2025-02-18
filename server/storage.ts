@@ -1,8 +1,12 @@
 import { User, InsertUser, Coin, Vote, VoteResponse, Comment } from "@shared/schema";
+import { users, coins, votes, voteResponses, comments } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc, and, lte } from "drizzle-orm";
 import session from "express-session";
-import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
+import { pool } from "./db";
 
-const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   // User operations
@@ -10,151 +14,129 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   addWalletToUser(userId: number, wallet: string): Promise<User>;
-  
+
   // Coin operations
   createCoin(coin: Omit<Coin, "id">): Promise<Coin>;
   getCoin(id: number): Promise<Coin | undefined>;
   getAllCoins(): Promise<Coin[]>;
-  
+
   // Vote operations
   createVote(vote: Omit<Vote, "id">): Promise<Vote>;
   getVote(id: number): Promise<Vote | undefined>;
   getVotesByCoin(coinId: number): Promise<Vote[]>;
   createVoteResponse(response: Omit<VoteResponse, "id">): Promise<VoteResponse>;
   getVoteResponses(voteId: number): Promise<VoteResponse[]>;
-  
+
   // Comment operations
   createComment(comment: Omit<Comment, "id">): Promise<Comment>;
   getCommentsByCoin(coinId: number): Promise<Comment[]>;
   getLastComments(userId: number, limit: number): Promise<Comment[]>;
-  
+
   sessionStore: session.Store;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private coins: Map<number, Coin>;
-  private votes: Map<number, Vote>;
-  private voteResponses: Map<number, VoteResponse>;
-  private comments: Map<number, Comment>;
+export class DatabaseStorage implements IStorage {
   public sessionStore: session.Store;
-  private currentId: Record<string, number>;
 
   constructor() {
-    this.users = new Map();
-    this.coins = new Map();
-    this.votes = new Map();
-    this.voteResponses = new Map();
-    this.comments = new Map();
-    this.currentId = {
-      users: 1,
-      coins: 1,
-      votes: 1,
-      voteResponses: 1,
-      comments: 1,
-    };
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000,
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true,
     });
   }
 
   // User operations
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentId.users++;
-    const user: User = { ...insertUser, id, connectedWallets: [] };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
   async addWalletToUser(userId: number, wallet: string): Promise<User> {
     const user = await this.getUser(userId);
     if (!user) throw new Error("User not found");
-    
-    const updatedUser = {
-      ...user,
-      connectedWallets: [...(user.connectedWallets || []), wallet],
-    };
-    this.users.set(userId, updatedUser);
+
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        connectedWallets: [...(user.connectedWallets || []), wallet],
+      })
+      .where(eq(users.id, userId))
+      .returning();
+
     return updatedUser;
   }
 
   // Coin operations
   async createCoin(coin: Omit<Coin, "id">): Promise<Coin> {
-    const id = this.currentId.coins++;
-    const newCoin = { ...coin, id };
-    this.coins.set(id, newCoin);
+    const [newCoin] = await db.insert(coins).values(coin).returning();
     return newCoin;
   }
 
   async getCoin(id: number): Promise<Coin | undefined> {
-    return this.coins.get(id);
+    const [coin] = await db.select().from(coins).where(eq(coins.id, id));
+    return coin;
   }
 
   async getAllCoins(): Promise<Coin[]> {
-    return Array.from(this.coins.values());
+    return await db.select().from(coins);
   }
 
   // Vote operations
   async createVote(vote: Omit<Vote, "id">): Promise<Vote> {
-    const id = this.currentId.votes++;
-    const newVote = { ...vote, id };
-    this.votes.set(id, newVote);
+    const [newVote] = await db.insert(votes).values(vote).returning();
     return newVote;
   }
 
   async getVote(id: number): Promise<Vote | undefined> {
-    return this.votes.get(id);
+    const [vote] = await db.select().from(votes).where(eq(votes.id, id));
+    return vote;
   }
 
   async getVotesByCoin(coinId: number): Promise<Vote[]> {
-    return Array.from(this.votes.values()).filter(
-      (vote) => vote.coinId === coinId,
-    );
+    return await db.select().from(votes).where(eq(votes.coinId, coinId));
   }
 
   async createVoteResponse(response: Omit<VoteResponse, "id">): Promise<VoteResponse> {
-    const id = this.currentId.voteResponses++;
-    const newResponse = { ...response, id };
-    this.voteResponses.set(id, newResponse);
+    const [newResponse] = await db.insert(voteResponses).values(response).returning();
     return newResponse;
   }
 
   async getVoteResponses(voteId: number): Promise<VoteResponse[]> {
-    return Array.from(this.voteResponses.values()).filter(
-      (response) => response.voteId === voteId,
-    );
+    return await db.select().from(voteResponses).where(eq(voteResponses.voteId, voteId));
   }
 
   // Comment operations
   async createComment(comment: Omit<Comment, "id">): Promise<Comment> {
-    const id = this.currentId.comments++;
-    const newComment = { ...comment, id };
-    this.comments.set(id, newComment);
+    const [newComment] = await db.insert(comments).values(comment).returning();
     return newComment;
   }
 
   async getCommentsByCoin(coinId: number): Promise<Comment[]> {
-    return Array.from(this.comments.values()).filter(
-      (comment) => comment.coinId === coinId,
-    );
+    return await db
+      .select()
+      .from(comments)
+      .where(eq(comments.coinId, coinId))
+      .orderBy(desc(comments.createdAt));
   }
 
   async getLastComments(userId: number, limit: number): Promise<Comment[]> {
-    return Array.from(this.comments.values())
-      .filter((comment) => comment.userId === userId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .slice(0, limit);
+    return await db
+      .select()
+      .from(comments)
+      .where(eq(comments.userId, userId))
+      .orderBy(desc(comments.createdAt))
+      .limit(limit);
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

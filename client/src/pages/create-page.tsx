@@ -25,7 +25,7 @@ export default function CreatePage() {
       await apiRequest("POST", "/api/coins", data);
       toast({
         title: "Success",
-        description: "Your coin has been created successfully",
+        description: "Your coin has been created successfully. A marketing wallet has been automatically generated.",
       });
       navigate("/");
     } catch (error) {
@@ -52,7 +52,7 @@ export default function CreatePage() {
           <CardHeader>
             <CardTitle>Coin Details</CardTitle>
             <CardDescription>
-              Fill in the basic information about your coin
+              Fill in the basic information about your coin. A marketing wallet will be automatically created.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -60,22 +60,21 @@ export default function CreatePage() {
               <div className="space-y-2">
                 <Label htmlFor="name">Coin Name</Label>
                 <Input id="name" {...form.register("name")} />
+                {form.formState.errors.name && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.name.message}
+                  </p>
+                )}
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="symbol">Symbol</Label>
                 <Input id="symbol" {...form.register("symbol")} />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="marketingWalletAddress">Marketing Wallet (Optional)</Label>
-                <Input 
-                  id="marketingWalletAddress" 
-                  {...form.register("marketingWalletAddress")} 
-                />
-                <p className="text-sm text-muted-foreground">
-                  This wallet will be used for managing marketing funds
-                </p>
+                {form.formState.errors.symbol && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.symbol.message}
+                  </p>
+                )}
               </div>
 
               <div className="flex gap-2">

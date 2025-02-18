@@ -13,7 +13,7 @@ export const coins = pgTable("coins", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   symbol: text("symbol").notNull(),
-  marketingWalletAddress: text("marketing_wallet_address"),
+  marketingWalletAddress: text("marketing_wallet_address").notNull(),
   creatorId: integer("creator_id").notNull(),
 });
 
@@ -52,7 +52,6 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const insertCoinSchema = createInsertSchema(coins).pick({
   name: true,
   symbol: true,
-  marketingWalletAddress: true,
 });
 
 export const insertVoteSchema = createInsertSchema(votes).pick({
