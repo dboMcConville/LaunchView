@@ -20,7 +20,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/wallets", requireAuth, async (req, res) => {
     const { wallet } = req.body;
     if (!wallet) return res.status(400).json({ message: "Wallet address required" });
-    
+
     try {
       const user = await storage.addWalletToUser(req.user!.id, wallet);
       res.json(user);
@@ -33,9 +33,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/coins", requireAuth, async (req, res) => {
     try {
       const data = insertCoinSchema.parse(req.body);
+
+      // Generate a deterministic marketing wallet address for the coin
+      // In production, this would involve actual wallet creation logic
+      const marketingWalletAddress = `0x${Buffer.from(data.name + data.symbol).toString('hex')}`;
+
       const coin = await storage.createCoin({
         ...data,
         creatorId: req.user!.id,
+        marketingWalletAddress,
       });
       res.json(coin);
     } catch (error) {
@@ -44,14 +50,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/coins", async (req, res) => {
-    const coins = await storage.getAllCoins();
-    res.json(coins);
+    try {
+      const coins = await storage.getAllCoins();
+      res.json(coins);
+    } catch (error) {
+      res.status(500).json({ message: (error as Error).message });
+    }
   });
 
   app.get("/api/coins/:id", async (req, res) => {
-    const coin = await storage.getCoin(parseInt(req.params.id));
-    if (!coin) return res.status(404).json({ message: "Coin not found" });
-    res.json(coin);
+    try {
+      const coin = await storage.getCoin(parseInt(req.params.id));
+      if (!coin) return res.status(404).json({ message: "Coin not found" });
+      res.json(coin);
+    } catch (error) {
+      res.status(500).json({ message: (error as Error).message });
+    }
   });
 
   // Vote routes
@@ -76,7 +90,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/votes/:id/respond", requireAuth, async (req, res) => {
     const voteId = parseInt(req.params.id);
     const { selectedOption } = req.body;
-    
+
     try {
       const response = await storage.createVoteResponse({
         voteId,
@@ -95,7 +109,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const data = insertCommentSchema.parse(req.body);
       const lastComments = await storage.getLastComments(req.user!.id, 3);
-      
+
       if (lastComments.length === 3) {
         return res.status(400).json({ message: "Cannot post more than 3 consecutive comments" });
       }
