@@ -8,13 +8,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Wallet, ExternalLink } from "lucide-react";
+import { Wallet, ExternalLink, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export function MarketingWallet({ coin }: { coin: any }) {
   const [address, setAddress] = useState("");
   const { toast } = useToast();
+
+  const { data: transactions } = useQuery({
+    queryKey: [`/api/coins/${coin.id}/transactions`],
+  });
 
   const setMarketingWallet = async () => {
     try {
@@ -47,10 +52,52 @@ export function MarketingWallet({ coin }: { coin: any }) {
       </CardHeader>
       <CardContent>
         {coin.marketingWalletAddress ? (
-          <div className="space-y-4">
-            <div className="p-4 bg-secondary/50 rounded-lg break-all">
-              {coin.marketingWalletAddress}
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-sm font-medium mb-2">Wallet Address</h3>
+              <div className="p-4 bg-secondary/50 rounded-lg break-all">
+                {coin.marketingWalletAddress}
+              </div>
             </div>
+
+            <div>
+              <h3 className="text-sm font-medium mb-2">Total Balance</h3>
+              <div className="p-4 bg-secondary/50 rounded-lg text-xl font-bold">
+                {Number(coin.marketingWalletBalance).toLocaleString()} USDC
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-medium mb-2">Recent Transactions</h3>
+              <div className="space-y-2">
+                {transactions?.map((tx: any) => (
+                  <div key={tx.id} className="p-3 bg-secondary/50 rounded-lg">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        {Number(tx.amount) >= 0 ? (
+                          <ArrowDownRight className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <ArrowUpRight className="h-4 w-4 text-red-500" />
+                        )}
+                        <span className="font-medium">
+                          {Number(tx.amount).toLocaleString()} USDC
+                        </span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(tx.timestamp).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="text-sm text-muted-foreground truncate">
+                      From: {tx.senderAddress}
+                    </div>
+                    {tx.description && (
+                      <div className="text-sm mt-1">{tx.description}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <Button
               variant="outline"
               className="w-full"

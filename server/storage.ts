@@ -1,5 +1,5 @@
-import { User, InsertUser, Coin, Vote, VoteResponse, Comment } from "@shared/schema";
-import { users, coins, votes, voteResponses, comments } from "@shared/schema";
+import { User, InsertUser, Coin, Vote, VoteResponse, Comment, WalletTransaction } from "@shared/schema";
+import { users, coins, votes, voteResponses, comments, walletTransactions } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, lte } from "drizzle-orm";
 import session from "express-session";
@@ -31,6 +31,10 @@ export interface IStorage {
   createComment(comment: Omit<Comment, "id">): Promise<Comment>;
   getCommentsByCoin(coinId: number): Promise<Comment[]>;
   getLastComments(userId: number, limit: number): Promise<Comment[]>;
+
+  // Wallet transaction operations
+  createWalletTransaction(transaction: Omit<WalletTransaction, "id">): Promise<WalletTransaction>;
+  getWalletTransactions(coinId: number): Promise<WalletTransaction[]>;
 
   sessionStore: session.Store;
 }
@@ -136,6 +140,22 @@ export class DatabaseStorage implements IStorage {
       .where(eq(comments.userId, userId))
       .orderBy(desc(comments.createdAt))
       .limit(limit);
+  }
+
+  async createWalletTransaction(transaction: Omit<WalletTransaction, "id">): Promise<WalletTransaction> {
+    const [newTransaction] = await db
+      .insert(walletTransactions)
+      .values(transaction)
+      .returning();
+    return newTransaction;
+  }
+
+  async getWalletTransactions(coinId: number): Promise<WalletTransaction[]> {
+    return await db
+      .select()
+      .from(walletTransactions)
+      .where(eq(walletTransactions.coinId, coinId))
+      .orderBy(desc(walletTransactions.timestamp));
   }
 }
 

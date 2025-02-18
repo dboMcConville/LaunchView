@@ -44,6 +44,16 @@ export const comments = pgTable("comments", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Add new schema for wallet transactions
+export const walletTransactions = pgTable("wallet_transactions", {
+  id: serial("id").primaryKey(),
+  coinId: integer("coin_id").notNull(),
+  amount: numeric("amount").notNull(),
+  senderAddress: text("sender_address").notNull(),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  description: text("description"),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -72,6 +82,14 @@ export const insertCommentSchema = createInsertSchema(comments).pick({
   content: true,
 });
 
+// Add transaction schema and type exports
+export const insertWalletTransactionSchema = createInsertSchema(walletTransactions).pick({
+  coinId: true,
+  amount: true,
+  senderAddress: true,
+  description: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -79,3 +97,5 @@ export type Coin = typeof coins.$inferSelect;
 export type Vote = typeof votes.$inferSelect;
 export type VoteResponse = typeof voteResponses.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
+export type WalletTransaction = typeof walletTransactions.$inferSelect;
+export type InsertWalletTransaction = z.infer<typeof insertWalletTransactionSchema>;

@@ -68,6 +68,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  //Transaction routes
+  app.get("/api/coins/:coinId/transactions", async (req, res) => {
+    try {
+      const transactions = await storage.getWalletTransactions(parseInt(req.params.coinId));
+      res.json(transactions);
+    } catch (error) {
+      res.status(500).json({ message: (error as Error).message });
+    }
+  });
+
+  app.post("/api/coins/:coinId/transactions", requireAuth, async (req, res) => {
+    try {
+      const transaction = await storage.createWalletTransaction({
+        ...req.body,
+        coinId: parseInt(req.params.coinId),
+        timestamp: new Date(),
+      });
+      res.json(transaction);
+    } catch (error) {
+      res.status(400).json({ message: (error as Error).message });
+    }
+  });
+
+
   // Vote routes
   app.post("/api/votes", requireAuth, async (req, res) => {
     try {
