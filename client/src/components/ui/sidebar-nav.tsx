@@ -1,13 +1,18 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Home, Coins, Settings } from "lucide-react";
+import { Home, PlusCircle, Settings } from "lucide-react";
 
 const navItems = [
   {
     title: "Home",
     href: "/",
     icon: Home,
+  },
+  {
+    title: "Create Coin",
+    href: "/create",
+    icon: PlusCircle,
   },
   {
     title: "Settings",
