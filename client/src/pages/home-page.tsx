@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from "wouter";
 import { Wallet, Users } from "lucide-react";
+import { SiUsdcoin } from "react-icons/si";
 
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
@@ -46,8 +47,8 @@ export default function HomePage() {
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <Wallet className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">
-                        Marketing Budget: {Number(coin.marketingWalletBalance).toLocaleString()} USDC
+                      <span className="text-sm flex items-center gap-1">
+                        Marketing Budget: {Number(coin.marketingWalletBalance).toLocaleString()} <SiUsdcoin className="h-4 w-4" />
                       </span>
                     </div>
 
