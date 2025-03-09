@@ -10,8 +10,8 @@ const navItems = [
     icon: Home,
   },
   {
-    title: "Create Coin",
-    href: "/create",
+    title: "Launch",
+    href: "/launch",
     icon: PlusCircle,
   },
   {
