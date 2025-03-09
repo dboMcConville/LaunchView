@@ -32,7 +32,8 @@ export default function LaunchPage() {
   const addExistingCoin = async (data: { contractAddress: string }) => {
     setIsLoading(true);
     try {
-      await apiRequest("POST", "/api/coins/add", { address: data.contractAddress });
+      const res = await apiRequest("POST", "/api/coins/add", { address: data.contractAddress });
+      const coin = await res.json();
 
       toast({
         title: "Success",
@@ -60,7 +61,7 @@ export default function LaunchPage() {
         title: "Success",
         description: "Your coin has been created successfully. A marketing wallet has been automatically generated.",
       });
-      navigate(`/coins/${coin.id}`);
+      navigate(`/coins/${coin.marketingWalletAddress}`);
     } catch (error) {
       toast({
         title: "Error",
