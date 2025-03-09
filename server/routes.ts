@@ -20,7 +20,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/coins/address/:address", async (req, res) => {
     try {
       console.log("Looking up coin with address:", req.params.address);
-      // Search for coin by contract address using storage interface
       const coins = await storage.getAllCoins();
       const coin = coins.find(c => c.marketingWalletAddress === req.params.address);
 

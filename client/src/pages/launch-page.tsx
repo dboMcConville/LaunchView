@@ -35,6 +35,8 @@ export default function LaunchPage() {
       const res = await apiRequest("POST", "/api/coins/add", { address: data.contractAddress });
       const coin = await res.json();
 
+      // Invalidate the coins query to trigger a refetch
+      queryClient.invalidateQueries({ queryKey: ["/api/coins"] });
       toast({
         title: "Success",
         description: "Coin has been added to LaunchView",
