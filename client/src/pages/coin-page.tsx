@@ -13,8 +13,9 @@ export default function CoinPage() {
   const { address } = useParams();
   const { user } = useAuth();
 
-  const { data: coin, isLoading } = useQuery({
+  const { data: coin, isLoading, error } = useQuery({
     queryKey: [`/api/coins/address/${address}`],
+    retry: 1, // Only retry once to avoid unnecessary requests
   });
 
   if (isLoading) {
@@ -28,12 +29,22 @@ export default function CoinPage() {
     );
   }
 
-  if (!coin) {
+  if (error || !coin) {
     return (
       <div className="flex min-h-screen">
         <SidebarNav />
         <main className="flex-1 p-8">
-          <h1 className="text-2xl font-bold">Coin not found</h1>
+          <div className="max-w-2xl mx-auto text-center">
+            <h1 className="text-2xl font-bold mb-4">Coin not found</h1>
+            <p className="text-muted-foreground">
+              The coin with address {address} could not be found. This could mean:
+            </p>
+            <ul className="mt-4 text-left list-disc pl-6">
+              <li>The contract address is incorrect</li>
+              <li>The coin hasn't been added to LaunchView yet</li>
+              <li>There was an error loading the coin data</li>
+            </ul>
+          </div>
         </main>
       </div>
     );

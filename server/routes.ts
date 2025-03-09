@@ -19,17 +19,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Coin routes
   app.get("/api/coins/address/:address", async (req, res) => {
     try {
+      console.log("Looking up coin with address:", req.params.address);
       // Search for coin by contract address using storage interface
       const coins = await storage.getAllCoins();
       const coin = coins.find(c => c.marketingWalletAddress === req.params.address);
 
       if (coin) {
+        console.log("Found coin:", coin);
         return res.json(coin);
       }
 
-      // If coin doesn't exist, return 404
+      console.log("Coin not found for address:", req.params.address);
       res.status(404).json({ message: "Coin not found" });
     } catch (error) {
+      console.error("Error looking up coin:", error);
       res.status(500).json({ message: (error as Error).message });
     }
   });
@@ -41,8 +44,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Contract address is required" });
       }
 
-      // In a production environment, we would validate the contract address
-      // and fetch real data from the blockchain
+      console.log("Adding new coin with address:", address);
+
+      // Check if coin already exists
+      const coins = await storage.getAllCoins();
+      const existingCoin = coins.find(c => c.marketingWalletAddress === address);
+
+      if (existingCoin) {
+        console.log("Coin already exists:", existingCoin);
+        return res.json(existingCoin);
+      }
+
+      // Create new coin
       const coin = await storage.createCoin({
         name: `Coin ${address.substring(0, 8)}`,
         symbol: address.substring(0, 4).toUpperCase(),
@@ -51,8 +64,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         marketingWalletBalance: "0",
       });
 
+      console.log("Created new coin:", coin);
       res.json(coin);
     } catch (error) {
+      console.error("Error adding coin:", error);
       res.status(400).json({ message: (error as Error).message });
     }
   });
@@ -112,7 +127,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(400).json({ message: (error as Error).message });
     }
   });
-
 
   // Vote routes
   app.post("/api/votes", requireAuth, async (req, res) => {
