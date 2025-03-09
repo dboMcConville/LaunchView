@@ -19,11 +19,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Coin routes
   app.get("/api/coins/address/:address", async (req, res) => {
     try {
-      // Search for coin by marketing wallet address using storage interface
+      // Search for coin by contract address using storage interface
       const coins = await storage.getAllCoins();
       const coin = coins.find(c => c.marketingWalletAddress === req.params.address);
-      if (!coin) return res.status(404).json({ message: "Coin not found" });
-      res.json(coin);
+
+      // If coin exists, return it
+      if (coin) {
+        return res.json(coin);
+      }
+
+      // If coin doesn't exist, create it
+      const newCoin = await storage.createCoin({
+        name: `Coin ${req.params.address.substring(0, 8)}`,
+        symbol: req.params.address.substring(0, 4).toUpperCase(),
+        creatorId: req.user?.id || 1, // Default to first user if not authenticated
+        marketingWalletAddress: req.params.address,
+        marketingWalletBalance: "0",
+      });
+
+      res.json(newCoin);
     } catch (error) {
       res.status(500).json({ message: (error as Error).message });
     }
