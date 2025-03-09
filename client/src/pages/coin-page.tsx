@@ -10,11 +10,11 @@ import { useParams } from "wouter";
 import { Loader2 } from "lucide-react";
 
 export default function CoinPage() {
-  const { id } = useParams();
+  const { address } = useParams();
   const { user } = useAuth();
 
   const { data: coin, isLoading } = useQuery({
-    queryKey: [`/api/coins/${id}`],
+    queryKey: [`/api/coins/address/${address}`],
   });
 
   if (isLoading) {
@@ -46,6 +46,9 @@ export default function CoinPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold">{coin.name}</h1>
           <p className="text-muted-foreground">{coin.symbol}</p>
+          <div className="mt-2 text-sm text-muted-foreground break-all">
+            Contract Address: {coin.marketingWalletAddress}
+          </div>
         </div>
 
         <div className="grid gap-8 md:grid-cols-2">

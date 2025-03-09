@@ -14,7 +14,7 @@ function Router() {
   return (
     <Switch>
       <ProtectedRoute path="/" component={HomePage} />
-      <ProtectedRoute path="/coins/:id" component={CoinPage} />
+      <ProtectedRoute path="/coins/:address" component={CoinPage} />
       <ProtectedRoute path="/launch" component={LaunchPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
