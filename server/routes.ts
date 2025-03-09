@@ -16,20 +16,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   };
 
-  // Wallet routes
-  app.post("/api/wallets", requireAuth, async (req, res) => {
-    const { wallet } = req.body;
-    if (!wallet) return res.status(400).json({ message: "Wallet address required" });
-
+  // Coin routes
+  app.get("/api/coins/address/:address", async (req, res) => {
     try {
-      const user = await storage.addWalletToUser(req.user!.id, wallet);
-      res.json(user);
+      // Search for coin by marketing wallet address using storage interface
+      const coins = await storage.getAllCoins();
+      const coin = coins.find(c => c.marketingWalletAddress === req.params.address);
+      if (!coin) return res.status(404).json({ message: "Coin not found" });
+      res.json(coin);
+    } catch (error) {
+      res.status(500).json({ message: (error as Error).message });
+    }
+  });
+
+  app.post("/api/coins/add", requireAuth, async (req, res) => {
+    try {
+      const { address } = req.body;
+      if (!address) {
+        return res.status(400).json({ message: "Contract address is required" });
+      }
+
+      // In a production environment, we would validate the contract address
+      // and fetch real data from the blockchain
+      const coin = await storage.createCoin({
+        name: `Coin ${address.substring(0, 8)}`,
+        symbol: address.substring(0, 4).toUpperCase(),
+        creatorId: req.user!.id,
+        marketingWalletAddress: address,
+        marketingWalletBalance: "0",
+      });
+
+      res.json(coin);
     } catch (error) {
       res.status(400).json({ message: (error as Error).message });
     }
   });
 
-  // Coin routes
   app.post("/api/coins", requireAuth, async (req, res) => {
     try {
       const data = insertCoinSchema.parse(req.body);
@@ -42,6 +64,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...data,
         creatorId: req.user!.id,
         marketingWalletAddress,
+        marketingWalletBalance: "0",
       });
       res.json(coin);
     } catch (error) {
@@ -65,6 +88,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(coin);
     } catch (error) {
       res.status(500).json({ message: (error as Error).message });
+    }
+  });
+
+
+  app.post("/api/wallets", requireAuth, async (req, res) => {
+    const { wallet } = req.body;
+    if (!wallet) return res.status(400).json({ message: "Wallet address required" });
+
+    try {
+      const user = await storage.addWalletToUser(req.user!.id, wallet);
+      res.json(user);
+    } catch (error) {
+      res.status(400).json({ message: (error as Error).message });
     }
   });
 
