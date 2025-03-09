@@ -23,21 +23,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const coins = await storage.getAllCoins();
       const coin = coins.find(c => c.marketingWalletAddress === req.params.address);
 
-      // If coin exists, return it
       if (coin) {
         return res.json(coin);
       }
 
-      // If coin doesn't exist, create it
-      const newCoin = await storage.createCoin({
-        name: `Coin ${req.params.address.substring(0, 8)}`,
-        symbol: req.params.address.substring(0, 4).toUpperCase(),
-        creatorId: req.user?.id || 1, // Default to first user if not authenticated
-        marketingWalletAddress: req.params.address,
-        marketingWalletBalance: "0",
-      });
-
-      res.json(newCoin);
+      // If coin doesn't exist, return 404
+      res.status(404).json({ message: "Coin not found" });
     } catch (error) {
       res.status(500).json({ message: (error as Error).message });
     }
@@ -66,25 +57,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/coins", requireAuth, async (req, res) => {
-    try {
-      const data = insertCoinSchema.parse(req.body);
-
-      // Generate a deterministic marketing wallet address for the coin
-      // In production, this would involve actual wallet creation logic
-      const marketingWalletAddress = `0x${Buffer.from(data.name + data.symbol).toString('hex')}`;
-
-      const coin = await storage.createCoin({
-        ...data,
-        creatorId: req.user!.id,
-        marketingWalletAddress,
-        marketingWalletBalance: "0",
-      });
-      res.json(coin);
-    } catch (error) {
-      res.status(400).json({ message: (error as Error).message });
-    }
-  });
 
   app.get("/api/coins", async (req, res) => {
     try {

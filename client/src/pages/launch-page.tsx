@@ -43,7 +43,7 @@ export default function LaunchPage() {
       // If not found, add it to our system
       const res = await apiRequest("POST", "/api/coins/add", { address: data.contractAddress });
       const newCoin = await res.json();
-      
+
       toast({
         title: "Success",
         description: "Coin has been added to LaunchView",
@@ -140,7 +140,7 @@ export default function LaunchPage() {
                     <Input id="name" {...launchForm.register("name")} />
                     {launchForm.formState.errors.name && (
                       <p className="text-sm text-destructive">
-                        {launchForm.formState.errors.name.message}
+                        {String(launchForm.formState.errors.name.message)}
                       </p>
                     )}
                   </div>
@@ -150,7 +150,7 @@ export default function LaunchPage() {
                     <Input id="symbol" {...launchForm.register("symbol")} />
                     {launchForm.formState.errors.symbol && (
                       <p className="text-sm text-destructive">
-                        {launchForm.formState.errors.symbol.message}
+                        {String(launchForm.formState.errors.symbol.message)}
                       </p>
                     )}
                   </div>
