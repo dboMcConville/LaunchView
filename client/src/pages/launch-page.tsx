@@ -32,23 +32,13 @@ export default function LaunchPage() {
   const addExistingCoin = async (data: { contractAddress: string }) => {
     setIsLoading(true);
     try {
-      // First check if the coin exists in our system
-      const existingCoin = await apiRequest("GET", `/api/coins/address/${data.contractAddress}`);
-      if (existingCoin.ok) {
-        const coin = await existingCoin.json();
-        navigate(`/coins/${coin.id}`);
-        return;
-      }
-
-      // If not found, add it to our system
-      const res = await apiRequest("POST", "/api/coins/add", { address: data.contractAddress });
-      const newCoin = await res.json();
+      await apiRequest("POST", "/api/coins/add", { address: data.contractAddress });
 
       toast({
         title: "Success",
         description: "Coin has been added to LaunchView",
       });
-      navigate(`/coins/${newCoin.id}`);
+      navigate(`/coins/${data.contractAddress}`);
     } catch (error) {
       toast({
         title: "Error",
