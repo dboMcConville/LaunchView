@@ -39,9 +39,9 @@ export default function LaunchPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/coins"] });
       toast({
         title: "Success",
-        description: "Coin has been added to LaunchView",
+        description: "Coin has been added to LaunchView. A marketing wallet has been generated.",
       });
-      navigate(`/coins/${data.contractAddress}`);
+      navigate(`/coins/${coin.contractAddress}`);
     } catch (error) {
       toast({
         title: "Error",

@@ -31,39 +31,39 @@ export default function HomePage() {
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {coins?.map((coin: any) => (
-              <Link key={coin.id} href={`/coins/${coin.marketingWalletAddress}`}>
-                <Card className="hover:bg-accent cursor-pointer transition-colors h-full">
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="font-bold text-lg">{coin.name}</h3>
-                        <p className="text-sm text-muted-foreground">{coin.symbol}</p>
-                      </div>
+            <Link key={coin.id} href={`/coins/${coin.contractAddress}`}>
+              <Card className="hover:bg-accent cursor-pointer transition-colors h-full">
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="font-bold text-lg">{coin.name}</h3>
+                      <p className="text-sm text-muted-foreground">{coin.symbol}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Wallet className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm flex items-center gap-1">
+                        Marketing Budget: {Number(coin.marketingWalletBalance).toLocaleString()} 
+                        <img 
+                          src="/node_modules/cryptocurrency-icons/svg/color/usdc.svg" 
+                          alt="USDC"
+                          className="h-4 w-4"
+                        />
+                      </span>
                     </div>
 
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Wallet className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm flex items-center gap-1">
-                          Marketing Budget: {Number(coin.marketingWalletBalance).toLocaleString()} 
-                          <img 
-                            src="/node_modules/cryptocurrency-icons/svg/color/usdc.svg" 
-                            alt="USDC"
-                            className="h-4 w-4"
-                          />
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">
-                          Board Members: TBD
-                        </span>
-                      </div>
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">
+                        Board Members: TBD
+                      </span>
                     </div>
-                  </CardContent>
-                </Card>
-              </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       </main>

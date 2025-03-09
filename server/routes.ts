@@ -19,16 +19,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Coin routes
   app.get("/api/coins/address/:address", async (req, res) => {
     try {
-      console.log("Looking up coin with address:", req.params.address);
+      console.log("Looking up coin with contract address:", req.params.address);
       const coins = await storage.getAllCoins();
-      const coin = coins.find(c => c.marketingWalletAddress === req.params.address);
+      const coin = coins.find(c => c.contractAddress === req.params.address);
 
       if (coin) {
         console.log("Found coin:", coin);
         return res.json(coin);
       }
 
-      console.log("Coin not found for address:", req.params.address);
+      console.log("Coin not found for contract address:", req.params.address);
       res.status(404).json({ message: "Coin not found" });
     } catch (error) {
       console.error("Error looking up coin:", error);
@@ -43,23 +43,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Contract address is required" });
       }
 
-      console.log("Adding new coin with address:", address);
+      console.log("Adding new coin with contract address:", address);
 
       // Check if coin already exists
       const coins = await storage.getAllCoins();
-      const existingCoin = coins.find(c => c.marketingWalletAddress === address);
+      const existingCoin = coins.find(c => c.contractAddress === address);
 
       if (existingCoin) {
         console.log("Coin already exists:", existingCoin);
         return res.json(existingCoin);
       }
 
+      // Generate a new marketing wallet address
+      // In production, this would involve actual Solana wallet creation
+      const marketingWalletAddress = `marketing_${Date.now().toString(36)}`;
+
       // Create new coin
       const coin = await storage.createCoin({
         name: `Coin ${address.substring(0, 8)}`,
         symbol: address.substring(0, 4).toUpperCase(),
+        contractAddress: address,
+        marketingWalletAddress,
         creatorId: req.user!.id,
-        marketingWalletAddress: address,
         marketingWalletBalance: "0",
       });
 
