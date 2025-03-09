@@ -4,7 +4,8 @@ import { useParams } from "wouter";
 import { TokenMetadata } from "@/components/token-metadata";
 
 export default function CoinPage() {
-  const { address } = useParams();
+  const params = useParams();
+  const address = params.address;
 
   if (!address) {
     return (
