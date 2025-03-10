@@ -12,15 +12,12 @@ interface TokenMetadata {
 
 export async function getTokenMetadata(address: string): Promise<TokenMetadata> {
   try {
-    // First try Jupiter's all tokens endpoint
     console.log('Fetching token metadata from Jupiter');
-    const jupiterResponse = await axios.get('https://token.jup.ag/all');
-    console.log('Jupiter API Response received');
+    const jupiterResponse = await axios.get(`https://token.jup.ag/token/${address}`);
+    console.log('Jupiter API Response:', jupiterResponse.data);
 
-    const tokenData = jupiterResponse.data.find((token: any) => token.address === address);
-
-    if (tokenData) {
-      console.log('Found token in Jupiter:', tokenData);
+    if (jupiterResponse.data) {
+      const tokenData = jupiterResponse.data;
       return {
         name: tokenData.name,
         symbol: tokenData.symbol,
@@ -55,7 +52,7 @@ export async function getTokenMetadata(address: string): Promise<TokenMetadata> 
   } catch (error) {
     console.error('Error fetching token metadata:', error);
     if (axios.isAxiosError(error)) {
-      throw new Error('Token not found in Jupiter API');
+      throw new Error(`Token not found in Jupiter API: ${error.message}`);
     }
     throw new Error(`Token not found on Solana blockchain: ${(error as Error).message}`);
   }
