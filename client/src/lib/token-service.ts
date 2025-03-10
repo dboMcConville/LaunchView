@@ -11,29 +11,25 @@ interface TokenMetadata {
 
 export async function getTokenMetadata(address: string): Promise<TokenMetadata> {
   try {
-    // Fetch token data from Jupiter token list API
-    const response = await axios.get(
-      `https://token.jup.ag/strict/all`
-    );
+    // Try to get token metadata from Jupiter API first
+    const response = await axios.get(`https://token.jup.ag/v4/token/${address}`);
 
-    const tokenList = response.data;
-    const tokenData = tokenList.find((token: any) => token.address === address);
-
-    if (!tokenData) {
-      throw new Error('Token not found. Please verify the contract address.');
+    if (!response.data) {
+      throw new Error('Token not found in Jupiter API');
     }
 
+    const tokenData = response.data;
+
     return {
-      name: tokenData.name,
-      symbol: tokenData.symbol,
-      decimals: tokenData.decimals,
-      // These fields might not be available from token list API
-      totalSupply: 'Data not available',
-      holders: undefined,
-      mintAuthority: undefined
+      name: tokenData.name || 'Unknown Token',
+      symbol: tokenData.symbol || 'Unknown',
+      decimals: tokenData.decimals || 0,
+      holders: tokenData.holder_count,
+      totalSupply: tokenData.supply?.toLocaleString() || 'Unknown',
+      mintAuthority: tokenData.mint_authority || 'Unknown'
     };
   } catch (error) {
     console.error('Error fetching token metadata:', error);
-    throw new Error('Failed to fetch token metadata');
+    throw new Error(`Failed to fetch token metadata: ${(error as Error).message}`);
   }
 }
