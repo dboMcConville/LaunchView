@@ -1,4 +1,4 @@
-import { Connection, PublicKey } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import axios from 'axios';
 
 interface TokenMetadata {
@@ -24,14 +24,6 @@ export async function getTokenMetadata(address: string): Promise<TokenMetadata> 
 
     if (!tokenData) {
       throw new Error('Token not found in Jupiter API');
-    }
-
-    // Get additional on-chain data from RPC
-    const connection = new Connection('https://api.mainnet-beta.solana.com');
-    const accountInfo = await connection.getAccountInfo(mintPubkey);
-
-    if (!accountInfo) {
-      throw new Error('Token account not found on-chain');
     }
 
     return {
