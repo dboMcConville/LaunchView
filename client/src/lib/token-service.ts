@@ -1,10 +1,9 @@
-import { PublicKey } from '@solana/web3.js';
 import axios from 'axios';
 
 interface TokenMetadata {
   name: string;
   symbol: string;
-  totalSupply: string;
+  totalSupply?: string;
   decimals: number;
   holders?: number;
   mintAuthority?: string;
@@ -12,27 +11,26 @@ interface TokenMetadata {
 
 export async function getTokenMetadata(address: string): Promise<TokenMetadata> {
   try {
-    // Validate the address is a valid Solana public key
-    const mintPubkey = new PublicKey(address);
-
-    // Get Jupiter API metadata which includes most token information
-    const jupiterResponse = await axios.get(
-      `https://price.jup.ag/v4/metadata/all`
+    // Fetch token data from Jupiter token list API
+    const response = await axios.get(
+      `https://token.jup.ag/strict/all`
     );
 
-    const tokenData = jupiterResponse.data.data[address];
+    const tokenList = response.data;
+    const tokenData = tokenList.find((token: any) => token.address === address);
 
     if (!tokenData) {
-      throw new Error('Token not found in Jupiter API');
+      throw new Error('Token not found. Please verify the contract address.');
     }
 
     return {
       name: tokenData.name,
       symbol: tokenData.symbol,
-      totalSupply: tokenData.total_supply?.toLocaleString() || 'Unknown',
-      decimals: tokenData.decimals || 0,
-      holders: tokenData.holders,
-      mintAuthority: tokenData.mint_authority || 'Unknown'
+      decimals: tokenData.decimals,
+      // These fields might not be available from token list API
+      totalSupply: 'Data not available',
+      holders: undefined,
+      mintAuthority: undefined
     };
   } catch (error) {
     console.error('Error fetching token metadata:', error);
