@@ -12,13 +12,15 @@ interface TokenMetadata {
 
 export async function getTokenMetadata(address: string): Promise<TokenMetadata> {
   try {
-    // Try Jupiter API first
-    console.log('Fetching token metadata from Jupiter for address:', address);
-    const jupiterResponse = await axios.get(`https://token.jup.ag/v4/token/${address}`);
-    console.log('Jupiter API Response:', jupiterResponse.data);
+    // First try Jupiter's all tokens endpoint
+    console.log('Fetching token metadata from Jupiter');
+    const jupiterResponse = await axios.get('https://token.jup.ag/all');
+    console.log('Jupiter API Response received');
 
-    if (jupiterResponse.data) {
-      const tokenData = jupiterResponse.data;
+    const tokenData = jupiterResponse.data.find((token: any) => token.address === address);
+
+    if (tokenData) {
+      console.log('Found token in Jupiter:', tokenData);
       return {
         name: tokenData.name,
         symbol: tokenData.symbol,
@@ -29,7 +31,7 @@ export async function getTokenMetadata(address: string): Promise<TokenMetadata> 
       };
     }
 
-    // Fallback to Solana RPC if Jupiter doesn't have the token
+    // Fallback to Solana RPC
     console.log('Token not found in Jupiter, falling back to Solana RPC');
     const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
     const mintPubkey = new PublicKey(address);
@@ -38,7 +40,7 @@ export async function getTokenMetadata(address: string): Promise<TokenMetadata> 
     console.log('Solana RPC Response:', accountInfo);
 
     if (!accountInfo.value) {
-      throw new Error('Token not found');
+      throw new Error('Token not found on Solana blockchain');
     }
 
     const parsedData = accountInfo.value.data as any;
@@ -52,9 +54,9 @@ export async function getTokenMetadata(address: string): Promise<TokenMetadata> 
 
   } catch (error) {
     console.error('Error fetching token metadata:', error);
-    if (axios.isAxiosError(error) && error.response?.status === 404) {
-      throw new Error('Token not found');
+    if (axios.isAxiosError(error)) {
+      throw new Error('Token not found in Jupiter API');
     }
-    throw new Error(`Failed to fetch token metadata: ${(error as Error).message}`);
+    throw new Error(`Token not found on Solana blockchain: ${(error as Error).message}`);
   }
 }

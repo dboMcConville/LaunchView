@@ -23,8 +23,8 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
       } catch (err) {
         const errorMessage = (err as Error).message;
         setError(
-          errorMessage === 'Token not found' 
-            ? `Token not found: ${address}`
+          errorMessage.includes('Token not found') 
+            ? `Token ${address} was not found on Jupiter or Solana.`
             : `Error fetching token data: ${errorMessage}`
         );
         console.error('Token metadata error:', err);
