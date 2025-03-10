@@ -3,6 +3,7 @@ import { getTokenMetadata } from '@/lib/token-service';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { format } from 'date-fns';
 
 interface TokenMetadataProps {
   address: string;
@@ -69,39 +70,59 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{metadata?.name || 'Unknown Token'}</CardTitle>
+        <CardTitle className="flex items-center gap-4">
+          {metadata.logoURI && (
+            <img 
+              src={metadata.logoURI} 
+              alt={metadata.name} 
+              className="w-8 h-8 rounded-full"
+            />
+          )}
+          {metadata.name} ({metadata.symbol})
+        </CardTitle>
         <CardDescription>Token Details</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid gap-4">
           <div>
-            <h3 className="font-medium mb-1">Symbol</h3>
-            <p className="text-sm">{metadata?.symbol}</p>
-          </div>
-          <div>
-            <h3 className="font-medium mb-1">Total Supply</h3>
-            <p className="text-sm">{metadata?.totalSupply}</p>
-          </div>
-          <div>
-            <h3 className="font-medium mb-1">Decimals</h3>
-            <p className="text-sm">{metadata?.decimals}</p>
-          </div>
-          {metadata?.holders !== undefined && (
-            <div>
-              <h3 className="font-medium mb-1">Holders</h3>
-              <p className="text-sm">{metadata.holders.toLocaleString()}</p>
-            </div>
-          )}
-          <div>
             <h3 className="font-medium mb-1">Contract Address</h3>
             <p className="text-sm font-mono break-all">{address}</p>
           </div>
           <div>
-            <h3 className="font-medium mb-1">Mint Authority</h3>
-            <p className="text-sm font-mono break-all">
-              {metadata?.mintAuthority || 'No mint authority'}
-            </p>
+            <h3 className="font-medium mb-1">Decimals</h3>
+            <p className="text-sm">{metadata.decimals}</p>
           </div>
+          {metadata.created_at && (
+            <div>
+              <h3 className="font-medium mb-1">Created At</h3>
+              <p className="text-sm">
+                {format(new Date(metadata.created_at), 'PPP')}
+              </p>
+            </div>
+          )}
+          {metadata.tags && metadata.tags.length > 0 && (
+            <div>
+              <h3 className="font-medium mb-1">Tags</h3>
+              <div className="flex gap-2 flex-wrap">
+                {metadata.tags.map((tag: string) => (
+                  <span 
+                    key={tag}
+                    className="px-2 py-1 bg-secondary rounded-full text-xs"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {metadata.daily_volume !== null && (
+            <div>
+              <h3 className="font-medium mb-1">24h Volume</h3>
+              <p className="text-sm">
+                ${Number(metadata.daily_volume).toLocaleString()}
+              </p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
