@@ -21,7 +21,12 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
         const data = await getTokenMetadata(address);
         setMetadata(data);
       } catch (err) {
-        setError((err as Error).message || 'Failed to fetch token metadata');
+        const errorMessage = (err as Error).message;
+        setError(
+          errorMessage === 'Token not found' 
+            ? `Token not found: ${address}`
+            : `Error fetching token data: ${errorMessage}`
+        );
         console.error('Token metadata error:', err);
       } finally {
         setLoading(false);
