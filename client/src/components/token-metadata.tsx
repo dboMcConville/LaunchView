@@ -95,7 +95,10 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
           <div>
             <h3 className="font-medium mb-1">Created At</h3>
             <p className="text-sm">
-              {format(new Date(metadata.created_at), 'PPP, h:mm:ss a')}
+              {format(new Date(metadata.created_at), 'PPP, h:mm:ss a (OOOO)')}
+              <span className="text-xs text-muted-foreground ml-1">
+                {' '}(Local time)
+              </span>
             </p>
           </div>
           {metadata.tags && metadata.tags.length > 0 && (
