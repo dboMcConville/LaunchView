@@ -24,7 +24,7 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
       } catch (err) {
         const errorMessage = (err as Error).message;
         setError(
-          errorMessage.includes('Token not found') 
+          errorMessage.includes('Token not found')
             ? `Token ${address} was not found on Jupiter or Solana.`
             : `Error fetching token data: ${errorMessage}`
         );
@@ -72,9 +72,9 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-4">
           {metadata.logoURI && (
-            <img 
-              src={metadata.logoURI} 
-              alt={metadata.name} 
+            <img
+              src={metadata.logoURI}
+              alt={metadata.name}
               className="w-8 h-8 rounded-full"
             />
           )}
@@ -95,7 +95,7 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
           <div>
             <h3 className="font-medium mb-1">Created At</h3>
             <p className="text-sm">
-              {format(new Date(metadata.created_at), 'PPP')}
+              {format(new Date(metadata.created_at), 'PPP, h:mm:ss a')}
             </p>
           </div>
           {metadata.tags && metadata.tags.length > 0 && (
@@ -103,7 +103,7 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
               <h3 className="font-medium mb-1">Tags</h3>
               <div className="flex gap-2 flex-wrap">
                 {metadata.tags.map((tag: string) => (
-                  <span 
+                  <span
                     key={tag}
                     className="px-2 py-1 bg-secondary rounded-full text-xs"
                   >
