@@ -92,14 +92,12 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
             <h3 className="font-medium mb-1">Decimals</h3>
             <p className="text-sm">{metadata.decimals}</p>
           </div>
-          {metadata.created_at && (
-            <div>
-              <h3 className="font-medium mb-1">Created At</h3>
-              <p className="text-sm">
-                {format(new Date(metadata.created_at), 'PPP')}
-              </p>
-            </div>
-          )}
+          <div>
+            <h3 className="font-medium mb-1">Created At</h3>
+            <p className="text-sm">
+              {format(new Date(metadata.created_at), 'PPP')}
+            </p>
+          </div>
           {metadata.tags && metadata.tags.length > 0 && (
             <div>
               <h3 className="font-medium mb-1">Tags</h3>
