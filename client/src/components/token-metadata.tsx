@@ -141,6 +141,14 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
               </p>
             </div>
           )}
+          {metadata.marketCap !== undefined && (
+            <div>
+              <h3 className="font-medium mb-1">Market Cap</h3>
+              <p className="text-sm">
+                ${Number(metadata.marketCap).toLocaleString()}
+              </p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

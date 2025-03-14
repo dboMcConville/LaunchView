@@ -16,17 +16,25 @@ interface TokenMetadata {
   extensions: Record<string, unknown>;
 }
 
-export async function getTokenMetadata(address: string): Promise<TokenMetadata> {
+export async function getTokenMetadata(address: string): Promise<TokenMetadata & { marketCap?: number }> {
   try {
     console.log(`Fetching token metadata from Jupiter for ${address}`);
-    const jupiterResponse = await axios.get(`https://api.jup.ag/tokens/v1/token/${address}`);
+    const [metadataResponse, priceResponse] = await Promise.all([
+      axios.get(`https://api.jup.ag/tokens/v1/token/${address}`),
+      axios.get(`https://api.jup.ag/price/v2?ids=${address}&showExtraInfo=true`)
+    ]);
 
-    if (!jupiterResponse.data) {
+    if (!metadataResponse.data) {
       throw new Error("Token not found in Jupiter API");
     }
 
-    console.log("Found token in Jupiter:", jupiterResponse.data);
-    return jupiterResponse.data;
+    console.log("Found token in Jupiter:", metadataResponse.data);
+    
+    const marketCap = priceResponse.data?.data?.[address]?.marketCap;
+    return {
+      ...metadataResponse.data,
+      marketCap
+    };
   } catch (error) {
     console.error('Jupiter API error:', error.response?.data || error.message);
     console.log('Token not found in Jupiter, falling back to Solana RPC');
