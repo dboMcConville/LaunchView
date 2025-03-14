@@ -3,7 +3,7 @@ import { getTokenMetadata } from '@/lib/token-service';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { format } from 'date-fns';
+import { differenceInMinutes, differenceInHours, differenceInDays, differenceInMonths, differenceInYears } from 'date-fns';
 
 interface TokenMetadataProps {
   address: string;
@@ -38,6 +38,32 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
       fetchMetadata();
     }
   }, [address]);
+
+  const getTimeAgo = (createdAt: string) => {
+    const createdDate = new Date(createdAt);
+    const now = new Date();
+
+    const years = differenceInYears(now, createdDate);
+    const months = differenceInMonths(now, createdDate) % 12;
+    const days = differenceInDays(now, createdDate);
+    const hours = differenceInHours(now, createdDate) % 24;
+    const minutes = differenceInMinutes(now, createdDate) % 60;
+
+    let timeAgo = [];
+
+    if (years > 0) timeAgo.push(`${years} year${years > 1 ? 's' : ''}`);
+    if (months > 0) timeAgo.push(`${months} month${months > 1 ? 's' : ''}`);
+
+    if (days > 0) {
+      timeAgo.push(`${days} day${days > 1 ? 's' : ''}`);
+    } else {
+      // If less than a day, show hours and minutes
+      if (hours > 0) timeAgo.push(`${hours} hour${hours > 1 ? 's' : ''}`);
+      if (minutes > 0) timeAgo.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
+    }
+
+    return timeAgo.join(' ') + ' ago';
+  };
 
   if (loading) {
     return (
@@ -89,17 +115,8 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
             <p className="text-sm font-mono break-all">{address}</p>
           </div>
           <div>
-            <h3 className="font-medium mb-1">Decimals</h3>
-            <p className="text-sm">{metadata.decimals}</p>
-          </div>
-          <div>
-            <h3 className="font-medium mb-1">Created At</h3>
-            <p className="text-sm">
-              {format(new Date(metadata.created_at), 'PPP, h:mm:ss a (OOOO)')}
-              <span className="text-xs text-muted-foreground ml-1">
-                {' '}(Local time)
-              </span>
-            </p>
+            <h3 className="font-medium mb-1">Created</h3>
+            <p className="text-sm">{getTimeAgo(metadata.created_at)}</p>
           </div>
           {metadata.tags && metadata.tags.length > 0 && (
             <div>
