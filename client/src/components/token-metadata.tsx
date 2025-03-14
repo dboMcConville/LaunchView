@@ -3,7 +3,7 @@ import { getTokenMetadata } from '@/lib/token-service';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { differenceInMinutes, differenceInHours, differenceInDays, differenceInMonths, differenceInYears } from 'date-fns';
+import { differenceInMinutes, differenceInHours, differenceInDays, differenceInMonths, differenceInYears, format } from 'date-fns';
 
 interface TokenMetadataProps {
   address: string;
@@ -115,8 +115,10 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
             <p className="text-sm font-mono break-all">{address}</p>
           </div>
           <div>
-            <h3 className="font-medium mb-1">Created</h3>
-            <p className="text-sm">{getTimeAgo(metadata.created_at)}</p>
+            <h3 className="font-medium mb-1">Created At</h3>
+            <p className="text-sm">
+              {format(new Date(metadata.created_at), 'PPP, h:mm:ss a')}
+            </p>
           </div>
           {metadata.tags && metadata.tags.length > 0 && (
             <div>
