@@ -61,4 +61,13 @@ app.use((req, res, next) => {
   server.listen(PORT, "0.0.0.0", () => {
     log(`serving on port ${PORT}`);
   });
+
+  // Handle graceful shutdown
+  process.on('SIGTERM', () => {
+    log('SIGTERM received, shutting down gracefully');
+    server.close(() => {
+      log('Server closed');
+      process.exit(0);
+    });
+  });
 })();
