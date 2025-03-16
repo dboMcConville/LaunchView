@@ -1,0 +1,65 @@
+Context:
+
+I have a frontend React application that fetches cryptocurrency token data from Jupiter (https://api.jup.ag) and attempts to retrieve the circulating supply directly from Solana's RPC endpoint (https://api.mainnet-beta.solana.com). However, the direct call from the browser fails due to CORS restrictions. I need to resolve this issue by creating a backend proxy endpoint.
+
+Task:
+
+Implement a simple backend API route in Node.js (preferably using Express.js) that:
+
+Accepts a Solana token mint address as a URL parameter.
+Connects securely to the Solana mainnet (https://api.mainnet-beta.solana.com) using @solana/web3.js.
+Retrieves the circulating token supply for the provided mint address.
+Returns a clear JSON response containing the token supply amount and decimals.
+Includes proper error handling and logging.
+Supports CORS requests from the frontend application.
+Technical Requirements:
+
+Use Node.js and Express.js for the backend.
+Use the @solana/web3.js library to interact with Solana RPC.
+Include cors middleware to explicitly handle cross-origin requests.
+Provide an example endpoint in the form of /api/token-supply/:mintAddress.
+Clearly document the returned JSON structure for easy frontend consumption.
+Expected JSON response structure:
+
+Successful response:
+
+json
+Copy
+Edit
+{
+  "success": true,
+  "data": {
+    "amount": "1234567890", 
+    "decimals": 6
+  }
+}
+Error response:
+
+json
+Copy
+Edit
+{
+  "success": false,
+  "error": "Reason for failure clearly stated here"
+}
+Acceptance Criteria:
+
+I should be able to call this backend API from my frontend React application without encountering CORS issues.
+The frontend should clearly receive the circulating supply and decimals in the defined structure, enabling a quick calculation of market cap.
+The backend route should handle invalid mint addresses gracefully, returning clear, helpful errors.
+The API should be efficient and suitable for production use.
+Additional Information:
+
+Frontend call example:
+
+js
+Copy
+Edit
+fetch('/api/token-supply/<tokenMintAddress>').then(...)
+Frontend market cap calculation example:
+
+js
+Copy
+Edit
+marketCap = priceFromJupiter * (amountFromBackend / (10 ** decimalsFromBackend));
+Please implement this backend API exactly as specified, following best practices for readability, maintainability, and scalability.
