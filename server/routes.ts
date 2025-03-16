@@ -1,20 +1,56 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertCoinSchema, insertVoteSchema, insertCommentSchema } from "@shared/schema";
+import { insertCoinSchema, insertVoteSchema, insertCommentSchema, mintAddressSchema, tokenSupplyResponseSchema } from "@shared/schema";
+import { Connection, PublicKey } from "@solana/web3.js";
+import * as token from "@solana/spl-token";
 import { z } from "zod";
+
+// Middleware to check authentication
+const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  next();
+};
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
-  // Middleware to check authentication
-  const requireAuth = (req: any, res: any, next: any) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Unauthorized" });
+  // Token supply endpoint
+  app.get("/api/token-supply/:mintAddress", async (req, res) => {
+    try {
+      // Validate mint address format
+      const { mintAddress } = mintAddressSchema.parse({ mintAddress: req.params.mintAddress });
+
+      // Connect to Solana mainnet
+      const connection = new Connection("https://api.mainnet-beta.solana.com", "confirmed");
+      const mintPubkey = new PublicKey(mintAddress);
+
+      // Get mint info and supply
+      const mintInfo = await token.getMint(connection, mintPubkey);
+
+      const response = tokenSupplyResponseSchema.parse({
+        success: true,
+        data: {
+          amount: mintInfo.supply.toString(),
+          decimals: mintInfo.decimals
+        }
+      });
+
+      res.json(response);
+    } catch (error) {
+      console.error("Error fetching token supply:", error);
+
+      const errorResponse = tokenSupplyResponseSchema.parse({
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to fetch token supply"
+      });
+
+      res.status(400).json(errorResponse);
     }
-    next();
-  };
+  });
 
   // Coin routes
   app.get("/api/coins/address/:address", async (req, res) => {

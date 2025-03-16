@@ -45,7 +45,6 @@ export const comments = pgTable("comments", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-// Add new schema for wallet transactions
 export const walletTransactions = pgTable("wallet_transactions", {
   id: serial("id").primaryKey(),
   coinId: integer("coin_id").notNull(),
@@ -55,7 +54,6 @@ export const walletTransactions = pgTable("wallet_transactions", {
   description: text("description"),
 });
 
-// Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -84,7 +82,6 @@ export const insertCommentSchema = createInsertSchema(comments).pick({
   content: true,
 });
 
-// Add transaction schema and type exports
 export const insertWalletTransactionSchema = createInsertSchema(walletTransactions).pick({
   coinId: true,
   amount: true,
@@ -92,7 +89,21 @@ export const insertWalletTransactionSchema = createInsertSchema(walletTransactio
   description: true,
 });
 
-// Types
+export const tokenSupplyResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.object({
+    amount: z.string(),
+    decimals: z.number()
+  }).optional(),
+  error: z.string().optional()
+});
+
+export type TokenSupplyResponse = z.infer<typeof tokenSupplyResponseSchema>;
+
+export const mintAddressSchema = z.object({
+  mintAddress: z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/, "Invalid Solana address format")
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type Coin = typeof coins.$inferSelect;
