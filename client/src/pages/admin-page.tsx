@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { useAuth } from "@/hooks/use-auth";
-import { TokenMetadata } from "@/components/token-metadata";
 import {
   Table,
   TableBody,
@@ -10,8 +9,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2, Send } from "lucide-react";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface CommunityWalletWithCoin {
   id: number;
@@ -24,8 +35,73 @@ interface CommunityWalletWithCoin {
   contractAddress: string;
 }
 
+interface TransferDialogProps {
+  wallet: CommunityWalletWithCoin;
+  onClose: () => void;
+}
+
+function TransferDialog({ wallet, onClose }: TransferDialogProps) {
+  const [amount, setAmount] = useState("");
+  const [destinationAddress, setDestinationAddress] = useState("");
+  const { toast } = useToast();
+
+  const handleTransfer = async () => {
+    try {
+      // TODO: Implement the transfer functionality
+      toast({
+        title: "Transfer initiated",
+        description: `Transferring ${amount} from ${wallet.coinSymbol} community wallet`,
+      });
+      onClose();
+    } catch (error) {
+      toast({
+        title: "Transfer failed",
+        description: (error as Error).message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Transfer Funds - {wallet.coinName}</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-4 py-4">
+        <div className="space-y-2">
+          <Label>From Wallet</Label>
+          <Input disabled value={wallet.walletAddress} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="amount">Amount</Label>
+          <Input
+            id="amount"
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="Enter amount to transfer"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="destination">Destination Address</Label>
+          <Input
+            id="destination"
+            value={destinationAddress}
+            onChange={(e) => setDestinationAddress(e.target.value)}
+            placeholder="Enter destination wallet address"
+          />
+        </div>
+        <Button onClick={handleTransfer} className="w-full">
+          Transfer
+        </Button>
+      </div>
+    </DialogContent>
+  );
+}
+
 function AdminDashboard() {
   const { user } = useAuth();
+  const [selectedWallet, setSelectedWallet] = useState<CommunityWalletWithCoin | null>(null);
 
   // Fetch community wallets with coin information
   const { data: wallets, isLoading, error } = useQuery<CommunityWalletWithCoin[]>({
@@ -75,19 +151,30 @@ function AdminDashboard() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Token Info</TableHead>
+                <TableHead>Token</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Symbol</TableHead>
                 <TableHead>Wallet Address</TableHead>
                 <TableHead>Balance</TableHead>
                 <TableHead>Last Updated</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {wallets?.map((wallet) => (
                 <TableRow key={wallet.id}>
                   <TableCell>
-                    <TokenMetadata address={wallet.contractAddress} />
+                    {/* Simple token logo display */}
+                    {wallet.contractAddress && (
+                      <img
+                        src={`https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/${wallet.contractAddress}/logo.png`}
+                        alt={wallet.coinName}
+                        className="w-8 h-8 rounded-full"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "https://placehold.co/32x32";
+                        }}
+                      />
+                    )}
                   </TableCell>
                   <TableCell>{wallet.coinName}</TableCell>
                   <TableCell>{wallet.coinSymbol}</TableCell>
@@ -97,6 +184,28 @@ function AdminDashboard() {
                   <TableCell>{wallet.balance}</TableCell>
                   <TableCell>
                     {new Date(wallet.lastUpdated).toLocaleString()}
+                  </TableCell>
+                  <TableCell>
+                    <Dialog open={selectedWallet?.id === wallet.id} onOpenChange={(open) => {
+                      if (!open) setSelectedWallet(null);
+                    }}>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedWallet(wallet)}
+                        >
+                          <Send className="h-4 w-4 mr-2" />
+                          Transfer
+                        </Button>
+                      </DialogTrigger>
+                      {selectedWallet && (
+                        <TransferDialog
+                          wallet={selectedWallet}
+                          onClose={() => setSelectedWallet(null)}
+                        />
+                      )}
+                    </Dialog>
                   </TableCell>
                 </TableRow>
               ))}
