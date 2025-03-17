@@ -14,8 +14,8 @@ export const coins = pgTable("coins", {
   name: text("name").notNull(),
   symbol: text("symbol").notNull(),
   contractAddress: text("contract_address").notNull().unique(),
-  marketingWalletAddress: text("marketing_wallet_address").notNull(),
-  marketingWalletBalance: numeric("marketing_wallet_balance").notNull().default("0"),
+  communityWalletAddress: text("community_wallet_address").notNull(),
+  communityWalletBalance: numeric("community_wallet_balance").notNull().default("0"),
   creatorId: integer("creator_id").notNull(),
 });
 
@@ -54,6 +54,17 @@ export const walletTransactions = pgTable("wallet_transactions", {
   description: text("description"),
 });
 
+export const communityWalletTransactions = pgTable("community_wallet_transactions", {
+  id: serial("id").primaryKey(),
+  coinId: integer("coin_id").notNull(),
+  amount: numeric("amount").notNull(),
+  senderAddress: text("sender_address").notNull(),
+  receiverAddress: text("receiver_address").notNull(),
+  transactionType: text("transaction_type").notNull(), 
+  description: text("description"),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -89,6 +100,15 @@ export const insertWalletTransactionSchema = createInsertSchema(walletTransactio
   description: true,
 });
 
+export const insertCommunityWalletTransactionSchema = createInsertSchema(communityWalletTransactions).pick({
+  coinId: true,
+  amount: true,
+  senderAddress: true,
+  receiverAddress: true,
+  transactionType: true,
+  description: true,
+});
+
 export const tokenSupplyResponseSchema = z.object({
   success: z.boolean(),
   data: z.object({
@@ -112,3 +132,5 @@ export type VoteResponse = typeof voteResponses.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
 export type WalletTransaction = typeof walletTransactions.$inferSelect;
 export type InsertWalletTransaction = z.infer<typeof insertWalletTransactionSchema>;
+export type InsertCommunityWalletTransaction = z.infer<typeof insertCommunityWalletTransactionSchema>;
+export type CommunityWalletTransaction = typeof communityWalletTransactions.$inferSelect;

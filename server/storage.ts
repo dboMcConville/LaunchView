@@ -1,5 +1,5 @@
-import { User, InsertUser, Coin, Vote, VoteResponse, Comment, WalletTransaction } from "@shared/schema";
-import { users, coins, votes, voteResponses, comments, walletTransactions } from "@shared/schema";
+import { User, InsertUser, Coin, Vote, VoteResponse, Comment, WalletTransaction, CommunityWalletTransaction } from "@shared/schema";
+import { users, coins, votes, voteResponses, comments, walletTransactions, communityWalletTransactions } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, lte } from "drizzle-orm";
 import session from "express-session";
@@ -35,6 +35,11 @@ export interface IStorage {
   // Wallet transaction operations
   createWalletTransaction(transaction: Omit<WalletTransaction, "id">): Promise<WalletTransaction>;
   getWalletTransactions(coinId: number): Promise<WalletTransaction[]>;
+
+  // Community wallet operations
+  getCommunityWalletTransactions(coinId: number): Promise<CommunityWalletTransaction[]>;
+  createCommunityWalletTransaction(transaction: Omit<CommunityWalletTransaction, "id">): Promise<CommunityWalletTransaction>;
+  updateCommunityWalletBalance(coinId: number, newBalance: string): Promise<void>;
 
   sessionStore: session.Store;
 }
@@ -142,6 +147,7 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
   }
 
+  // Wallet transaction operations
   async createWalletTransaction(transaction: Omit<WalletTransaction, "id">): Promise<WalletTransaction> {
     const [newTransaction] = await db
       .insert(walletTransactions)
@@ -156,6 +162,43 @@ export class DatabaseStorage implements IStorage {
       .from(walletTransactions)
       .where(eq(walletTransactions.coinId, coinId))
       .orderBy(desc(walletTransactions.timestamp));
+  }
+
+  // Community wallet operations
+  async getCommunityWalletTransactions(coinId: number): Promise<CommunityWalletTransaction[]> {
+    return await db
+      .select()
+      .from(communityWalletTransactions)
+      .where(eq(communityWalletTransactions.coinId, coinId))
+      .orderBy(desc(communityWalletTransactions.timestamp));
+  }
+
+  async createCommunityWalletTransaction(
+    transaction: Omit<CommunityWalletTransaction, "id">
+  ): Promise<CommunityWalletTransaction> {
+    const [newTransaction] = await db
+      .insert(communityWalletTransactions)
+      .values(transaction)
+      .returning();
+
+    // Update coin's community wallet balance
+    const coin = await this.getCoin(transaction.coinId);
+    if (coin) {
+      const currentBalance = parseFloat(coin.communityWalletBalance.toString());
+      const transactionAmount = parseFloat(transaction.amount.toString());
+      const newBalance = currentBalance + transactionAmount;
+
+      await this.updateCommunityWalletBalance(transaction.coinId, newBalance.toString());
+    }
+
+    return newTransaction;
+  }
+
+  async updateCommunityWalletBalance(coinId: number, newBalance: string): Promise<void> {
+    await db
+      .update(coins)
+      .set({ communityWalletBalance: newBalance })
+      .where(eq(coins.id, coinId));
   }
 }
 

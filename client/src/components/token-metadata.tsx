@@ -3,6 +3,7 @@ import { getTokenMetadata } from '@/lib/token-service';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { intervalToDuration, formatDuration } from 'date-fns';
 import {
   differenceInMinutes,
   differenceInHours,
@@ -80,28 +81,16 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
 
   const getTimeAgo = (createdAt: string) => {
     if (!createdAt) return 'Unknown';
+
     const createdDate = new Date(createdAt);
     const now = new Date();
 
-    const years = differenceInYears(now, createdDate);
-    const months = differenceInMonths(now, createdDate) % 12;
-    const days = differenceInDays(now, createdDate);
-    const hours = differenceInHours(now, createdDate) % 24;
-    const minutes = differenceInMinutes(now, createdDate) % 60;
+    const duration = intervalToDuration({ start: createdDate, end: now });
 
-    let timeAgo = [];
-
-    if (years > 0) timeAgo.push(`${years} year${years > 1 ? 's' : ''}`);
-    if (months > 0) timeAgo.push(`${months} month${months > 1 ? 's' : ''}`);
-
-    if (days > 0) {
-      timeAgo.push(`${days} day${days > 1 ? 's' : ''}`);
-    } else {
-      if (hours > 0) timeAgo.push(`${hours} hour${hours > 1 ? 's' : ''}`);
-      if (minutes > 0) timeAgo.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
-    }
-
-    return timeAgo.join(' ') + ' ago';
+    return formatDuration(duration, {
+      format: ['years', 'months', 'days', 'hours', 'minutes'],
+      delimiter: ', ',
+    }) + ' ago';
   };
 
   if (loading) {
@@ -144,7 +133,7 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
           <div>
             <h3 className="font-medium mb-1">Market Cap</h3>
             <p className="text-sm">
-              {marketCap !== null ? `$${marketCap.toLocaleString()}` : 'Calculating...'}
+              {marketCap !== null ? `$${Math.round(marketCap).toLocaleString()}` : 'Calculating...'}
             </p>
           </div>
 
@@ -181,7 +170,7 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
             <div>
               <h3 className="font-medium mb-1">24h Volume</h3>
               <p className="text-sm">
-                ${Number(metadata.daily_volume).toLocaleString()}
+                ${Math.round(Number(metadata.daily_volume)).toLocaleString()}
               </p>
             </div>
           )}

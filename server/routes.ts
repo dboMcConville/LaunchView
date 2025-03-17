@@ -3,9 +3,10 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { insertCoinSchema, insertVoteSchema, insertCommentSchema, mintAddressSchema, tokenSupplyResponseSchema } from "@shared/schema";
-import { Connection, PublicKey } from "@solana/web3.js";
+import { Connection, PublicKey, Keypair } from "@solana/web3.js";
 import * as token from "@solana/spl-token";
 import { z } from "zod";
+import { insertCommunityWalletTransactionSchema } from "@shared/schema";
 
 // Middleware to check authentication
 const requireAuth = (req: Request, res: Response, next: NextFunction) => {
@@ -90,21 +91,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(existingCoin);
       }
 
-      // Generate a new marketing wallet address
-      // In production, this would involve actual Solana wallet creation
-      const marketingWalletAddress = `marketing_${Date.now().toString(36)}`;
+      // Generate a new Solana wallet for the community
+      const communityWallet = Keypair.generate();
+      const communityWalletAddress = communityWallet.publicKey.toString();
 
       // Create new coin
       const coin = await storage.createCoin({
         name: `Coin ${address.substring(0, 8)}`,
         symbol: address.substring(0, 4).toUpperCase(),
         contractAddress: address,
-        marketingWalletAddress,
+        communityWalletAddress,
         creatorId: req.user!.id,
-        marketingWalletBalance: "0",
+        communityWalletBalance: "0",
       });
 
-      console.log("Created new coin:", coin);
+      console.log("Created new coin with community wallet:", coin);
       res.json(coin);
     } catch (error) {
       console.error("Error adding coin:", error);
@@ -134,6 +135,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/coins/:coinId/transactions", requireAuth, async (req, res) => {
     try {
       const transaction = await storage.createWalletTransaction({
+        ...req.body,
+        coinId: parseInt(req.params.coinId),
+        timestamp: new Date(),
+      });
+      res.json(transaction);
+    } catch (error) {
+      res.status(400).json({ message: (error as Error).message });
+    }
+  });
+
+  // Add community wallet transaction routes
+  app.get("/api/coins/:coinId/community-transactions", async (req, res) => {
+    try {
+      const transactions = await storage.getCommunityWalletTransactions(parseInt(req.params.coinId));
+      res.json(transactions);
+    } catch (error) {
+      res.status(500).json({ message: (error as Error).message });
+    }
+  });
+
+  app.post("/api/coins/:coinId/community-transactions", requireAuth, async (req, res) => {
+    try {
+      const transaction = await storage.createCommunityWalletTransaction({
         ...req.body,
         coinId: parseInt(req.params.coinId),
         timestamp: new Date(),
