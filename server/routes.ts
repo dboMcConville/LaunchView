@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { insertCoinSchema, insertVoteSchema, insertCommentSchema, mintAddressSchema, tokenSupplyResponseSchema } from "@shared/schema";
-import { Connection, PublicKey, Keypair } from "@solana/web3.js";
+import { Connection, PublicKey, Keypair, Transaction, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import * as token from "@solana/spl-token";
 import { z } from "zod";
 
@@ -22,6 +22,12 @@ const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
   }
   next();
 };
+
+// Add transfer validation schema
+const transferSchema = z.object({
+  amount: z.string(),
+  destinationAddress: z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/, "Invalid Solana address format"),
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -85,25 +91,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Coin routes
-  app.get("/api/coins/address/:address", async (req, res) => {
-    try {
-      console.log("Looking up coin with contract address:", req.params.address);
-      const coins = await storage.getAllCoins();
-      const coin = coins.find(c => c.contractAddress === req.params.address);
-
-      if (coin) {
-        console.log("Found coin:", coin);
-        return res.json(coin);
-      }
-
-      console.log("Coin not found for contract address:", req.params.address);
-      res.status(404).json({ message: "Coin not found" });
-    } catch (error) {
-      console.error("Error looking up coin:", error);
-      res.status(500).json({ message: (error as Error).message });
-    }
-  });
-
   app.post("/api/coins/add", requireAuth, async (req, res) => {
     try {
       const { address } = req.body;
@@ -134,6 +121,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const walletKeypair = Keypair.generate();
       const walletAddress = walletKeypair.publicKey.toString();
 
+      // Store the private key in environment variables
+      const privateKeyHex = Buffer.from(walletKeypair.secretKey).toString('hex');
+      process.env[`WALLET_PRIVATE_KEY_${coin.id}`] = privateKeyHex;
+
+      console.log(`Created new wallet for coin ${coin.id}:`);
+      console.log(`Public address: ${walletAddress}`);
+      console.log(`Private key (hex): ${privateKeyHex}`);
+
       // Create community wallet for the coin
       await storage.createCommunityWallet({
         coinId: coin.id,
@@ -145,6 +140,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error adding coin:", error);
       res.status(400).json({ message: (error as Error).message });
+    }
+  });
+
+  // Add new transfer endpoint
+  app.post("/api/admin/community-wallets/:walletId/transfer", requireAdmin, async (req, res) => {
+    try {
+      const { amount, destinationAddress } = transferSchema.parse(req.body);
+
+      // Connect to Solana network
+      const connection = new Connection("https://api.mainnet-beta.solana.com", "confirmed");
+
+      // Get wallet details
+      const wallet = await storage.getCommunityWallet(parseInt(req.params.walletId));
+      if (!wallet) {
+        return res.status(404).json({ message: "Wallet not found" });
+      }
+
+      // Get the private key from environment variables
+      const privateKeyHex = process.env[`WALLET_PRIVATE_KEY_${wallet.coinId}`];
+      if (!privateKeyHex) {
+        throw new Error("Wallet private key not found");
+      }
+
+      // Create transaction
+      const fromPubkey = new PublicKey(wallet.walletAddress);
+      const toPubkey = new PublicKey(destinationAddress);
+
+      const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey,
+          toPubkey,
+          lamports: Math.floor(parseFloat(amount) * LAMPORTS_PER_SOL),
+        })
+      );
+
+      // Get recent blockhash
+      const { blockhash } = await connection.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
+
+      // Sign and send transaction
+      const signer = Keypair.fromSecretKey(Buffer.from(privateKeyHex, 'hex'));
+      transaction.sign(signer);
+
+      const signature = await connection.sendRawTransaction(transaction.serialize());
+      await connection.confirmTransaction(signature);
+
+      // Update wallet balance in database
+      const accountInfo = await connection.getAccountInfo(fromPubkey);
+      const newBalance = (accountInfo?.lamports || 0).toString();
+      await storage.updateCommunityWalletBalance(wallet.coinId, newBalance);
+
+      res.json({ 
+        message: "Transfer successful",
+        signature,
+        newBalance 
+      });
+    } catch (error) {
+      console.error("Transfer error:", error);
+      res.status(400).json({ message: (error as Error).message });
+    }
+  });
+
+  app.get("/api/coins/address/:address", async (req, res) => {
+    try {
+      console.log("Looking up coin with contract address:", req.params.address);
+      const coins = await storage.getAllCoins();
+      const coin = coins.find(c => c.contractAddress === req.params.address);
+
+      if (coin) {
+        console.log("Found coin:", coin);
+        return res.json(coin);
+      }
+
+      console.log("Coin not found for contract address:", req.params.address);
+      res.status(404).json({ message: "Coin not found" });
+    } catch (error) {
+      console.error("Error looking up coin:", error);
+      res.status(500).json({ message: (error as Error).message });
     }
   });
 
@@ -243,6 +316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const comments = await storage.getCommentsByCoin(parseInt(req.params.coinId));
     res.json(comments);
   });
+
 
   const httpServer = createServer(app);
   return httpServer;

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -23,6 +23,9 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Send } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+
+const LAMPORTS_PER_SOL = 1e9; // 1 SOL = 1,000,000,000 lamports
 
 interface CommunityWalletWithCoin {
   id: number;
@@ -43,15 +46,33 @@ interface TransferDialogProps {
 function TransferDialog({ wallet, onClose }: TransferDialogProps) {
   const [amount, setAmount] = useState("");
   const [destinationAddress, setDestinationAddress] = useState("");
+  const [isTransferring, setIsTransferring] = useState(false);
   const { toast } = useToast();
 
   const handleTransfer = async () => {
     try {
-      // TODO: Implement the transfer functionality
-      toast({
-        title: "Transfer initiated",
-        description: `Transferring ${amount} from ${wallet.coinSymbol} community wallet`,
+      setIsTransferring(true);
+      const response = await apiRequest("POST", `/api/admin/community-wallets/${wallet.id}/transfer`, {
+        amount,
+        destinationAddress,
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message);
+      }
+
+      const result = await response.json();
+
+      toast({
+        title: "Transfer successful",
+        description: `Successfully transferred ${amount} SOL. New balance: ${
+          parseFloat(result.newBalance) / LAMPORTS_PER_SOL
+        } SOL`,
+      });
+
+      // Invalidate the community wallets query to refresh the data
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/community-wallets"] });
       onClose();
     } catch (error) {
       toast({
@@ -59,6 +80,8 @@ function TransferDialog({ wallet, onClose }: TransferDialogProps) {
         description: (error as Error).message,
         variant: "destructive",
       });
+    } finally {
+      setIsTransferring(false);
     }
   };
 
@@ -73,13 +96,15 @@ function TransferDialog({ wallet, onClose }: TransferDialogProps) {
           <Input disabled value={wallet.walletAddress} />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="amount">Amount</Label>
+          <Label htmlFor="amount">Amount (SOL)</Label>
           <Input
             id="amount"
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            placeholder="Enter amount to transfer"
+            placeholder="Enter amount in SOL"
+            step="0.000000001"
+            min="0"
           />
         </div>
         <div className="space-y-2">
@@ -91,8 +116,19 @@ function TransferDialog({ wallet, onClose }: TransferDialogProps) {
             placeholder="Enter destination wallet address"
           />
         </div>
-        <Button onClick={handleTransfer} className="w-full">
-          Transfer
+        <Button
+          onClick={handleTransfer}
+          className="w-full"
+          disabled={isTransferring}
+        >
+          {isTransferring ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Transferring...
+            </>
+          ) : (
+            "Transfer"
+          )}
         </Button>
       </div>
     </DialogContent>
