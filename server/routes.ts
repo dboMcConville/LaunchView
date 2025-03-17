@@ -120,22 +120,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate a new Solana keypair for the community wallet
       const walletKeypair = Keypair.generate();
       const walletAddress = walletKeypair.publicKey.toString();
-
-      // Store the private key in environment variables
       const privateKeyHex = Buffer.from(walletKeypair.secretKey).toString('hex');
-      process.env[`WALLET_PRIVATE_KEY_${coin.id}`] = privateKeyHex;
 
-      // Only log sensitive information if the user is an admin
-      if (req.user?.isAdmin) {
-        console.log(`Created new wallet for coin ${coin.id}:`);
-        console.log(`Public address: ${walletAddress}`);
-        console.log(`Private key (hex): ${privateKeyHex}`);
-      }
-
-      // Create community wallet for the coin
+      // Create community wallet for the coin with private key stored in database
       await storage.createCommunityWallet({
         coinId: coin.id,
         walletAddress,
+        privateKey: privateKeyHex,
       });
 
       console.log("Created new coin:", coin);
@@ -160,12 +151,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Wallet not found" });
       }
 
-      // Get the private key from environment variables
-      const privateKeyHex = process.env[`WALLET_PRIVATE_KEY_${wallet.coinId}`];
-      if (!privateKeyHex) {
-        throw new Error("Wallet private key not found");
-      }
-
       // Create transaction
       const fromPubkey = new PublicKey(wallet.walletAddress);
       const toPubkey = new PublicKey(destinationAddress);
@@ -182,8 +167,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { blockhash } = await connection.getLatestBlockhash();
       transaction.recentBlockhash = blockhash;
 
-      // Sign and send transaction
-      const signer = Keypair.fromSecretKey(Buffer.from(privateKeyHex, 'hex'));
+      // Sign and send transaction using private key from database
+      const signer = Keypair.fromSecretKey(Buffer.from(wallet.privateKey, 'hex'));
       transaction.sign(signer);
 
       const signature = await connection.sendRawTransaction(transaction.serialize());

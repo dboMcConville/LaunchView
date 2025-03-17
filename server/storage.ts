@@ -21,7 +21,7 @@ export interface IStorage {
   getAllCoins(): Promise<Coin[]>;
 
   // Community wallet operations
-  createCommunityWallet(wallet: InsertCommunityWallet): Promise<CommunityWallet>;
+  createCommunityWallet(wallet: InsertCommunityWallet & { privateKey: string }): Promise<CommunityWallet>;
   getCommunityWallet(coinId: number): Promise<CommunityWallet | undefined>;
   updateCommunityWalletBalance(coinId: number, balance: string): Promise<CommunityWallet>;
   getAllCommunityWallets(): Promise<CommunityWallet[]>;
@@ -102,7 +102,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Community wallet methods
-  async createCommunityWallet(wallet: InsertCommunityWallet): Promise<CommunityWallet> {
+  async createCommunityWallet(wallet: InsertCommunityWallet & { privateKey: string }): Promise<CommunityWallet> {
     const [newWallet] = await db.insert(communityWallets).values(wallet).returning();
     return newWallet;
   }

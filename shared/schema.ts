@@ -22,6 +22,7 @@ export const communityWallets = pgTable("community_wallets", {
   id: serial("id").primaryKey(),
   coinId: integer("coin_id").notNull().unique(),
   walletAddress: text("wallet_address").notNull().unique(),
+  privateKey: text("private_key").notNull(),
   balance: numeric("balance").notNull().default("0"),
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
@@ -75,6 +76,7 @@ export const insertCoinSchema = createInsertSchema(coins).pick({
 export const insertCommunityWalletSchema = createInsertSchema(communityWallets).pick({
   coinId: true,
   walletAddress: true,
+  privateKey: true
 });
 
 export const insertVoteSchema = createInsertSchema(votes).pick({
