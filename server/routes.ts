@@ -91,7 +91,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Coin routes
-  app.post("/api/coins/add", requireAdmin, async (req, res) => {
+  app.post("/api/coins/add", requireAuth, async (req, res) => {
     try {
       const { address } = req.body;
       if (!address) {

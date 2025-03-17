@@ -20,12 +20,6 @@ export default function CreatePage() {
     resolver: zodResolver(insertCoinSchema),
   });
 
-  // If user is not an admin, redirect to home
-  if (!user?.isAdmin) {
-    navigate("/");
-    return null;
-  }
-
   const createCoin = async (data: any) => {
     try {
       await apiRequest("POST", "/api/coins/add", data);
@@ -33,7 +27,7 @@ export default function CreatePage() {
       queryClient.invalidateQueries({ queryKey: ["/api/coins"] });
       toast({
         title: "Success",
-        description: "Your coin has been created successfully. A community wallet has been automatically generated. Check the console for wallet details.",
+        description: "Your coin has been created successfully. A community wallet has been automatically generated.",
       });
       navigate("/");
     } catch (error) {
