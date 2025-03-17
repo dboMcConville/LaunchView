@@ -27,6 +27,8 @@ const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
 const transferSchema = z.object({
   amount: z.string(),
   destinationAddress: z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/, "Invalid Solana address format"),
+  tokenType: z.enum(['sol', 'token']),
+  tokenAddress: z.string().nullable(),
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -140,7 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add new transfer endpoint
   app.post("/api/admin/community-wallets/:walletId/transfer", requireAdmin, async (req, res) => {
     try {
-      const { amount, destinationAddress } = transferSchema.parse(req.body);
+      const { amount, destinationAddress, tokenType, tokenAddress } = transferSchema.parse(req.body);
 
       // Connect to Solana network
       const connection = new Connection("https://api.mainnet-beta.solana.com", "confirmed");
@@ -151,17 +153,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Wallet not found" });
       }
 
-      // Create transaction
       const fromPubkey = new PublicKey(wallet.walletAddress);
       const toPubkey = new PublicKey(destinationAddress);
 
-      const transaction = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey,
-          toPubkey,
-          lamports: Math.floor(parseFloat(amount) * LAMPORTS_PER_SOL),
-        })
-      );
+      let transaction = new Transaction();
+
+      if (tokenType === 'sol') {
+        // Transfer SOL
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey,
+            toPubkey,
+            lamports: Math.floor(parseFloat(amount) * LAMPORTS_PER_SOL),
+          })
+        );
+      } else if (tokenType === 'token' && tokenAddress) {
+        // Transfer SPL Token
+        const tokenPublicKey = new PublicKey(tokenAddress);
+        const fromTokenAccount = await token.getAssociatedTokenAddress(
+          tokenPublicKey,
+          fromPubkey
+        );
+        const toTokenAccount = await token.getAssociatedTokenAddress(
+          tokenPublicKey,
+          toPubkey
+        );
+
+        // Check if destination token account exists
+        const toTokenAccountInfo = await connection.getAccountInfo(toTokenAccount);
+
+        if (!toTokenAccountInfo) {
+          // Create associated token account for destination if it doesn't exist
+          transaction.add(
+            token.createAssociatedTokenAccountInstruction(
+              fromPubkey, // payer
+              toTokenAccount,
+              toPubkey,
+              tokenPublicKey
+            )
+          );
+        }
+
+        // Add token transfer instruction
+        transaction.add(
+          token.createTransferInstruction(
+            fromTokenAccount,
+            toTokenAccount,
+            fromPubkey,
+            BigInt(Math.floor(parseFloat(amount) * Math.pow(10, 9))) // assuming 9 decimals
+          )
+        );
+      }
 
       // Get recent blockhash
       const { blockhash } = await connection.getLatestBlockhash();

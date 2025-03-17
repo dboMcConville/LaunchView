@@ -20,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Send } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -44,6 +45,7 @@ interface TransferDialogProps {
 }
 
 function TransferDialog({ wallet, onClose }: TransferDialogProps) {
+  const [tokenType, setTokenType] = useState<'sol' | 'token'>('sol');
   const [amount, setAmount] = useState("");
   const [destinationAddress, setDestinationAddress] = useState("");
   const [isTransferring, setIsTransferring] = useState(false);
@@ -55,6 +57,8 @@ function TransferDialog({ wallet, onClose }: TransferDialogProps) {
       const response = await apiRequest("POST", `/api/admin/community-wallets/${wallet.id}/transfer`, {
         amount,
         destinationAddress,
+        tokenType,
+        tokenAddress: tokenType === 'token' ? wallet.contractAddress : null
       });
 
       if (!response.ok) {
@@ -66,9 +70,7 @@ function TransferDialog({ wallet, onClose }: TransferDialogProps) {
 
       toast({
         title: "Transfer successful",
-        description: `Successfully transferred ${amount} SOL. New balance: ${
-          parseFloat(result.newBalance) / LAMPORTS_PER_SOL
-        } SOL`,
+        description: `Successfully transferred ${amount} ${tokenType === 'sol' ? 'SOL' : wallet.coinSymbol}`,
       });
 
       // Invalidate the community wallets query to refresh the data
@@ -96,13 +98,28 @@ function TransferDialog({ wallet, onClose }: TransferDialogProps) {
           <Input disabled value={wallet.walletAddress} />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="amount">Amount (SOL)</Label>
+          <Label>Token Type</Label>
+          <Select
+            value={tokenType}
+            onValueChange={(value: 'sol' | 'token') => setTokenType(value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select token type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="sol">SOL (Native)</SelectItem>
+              <SelectItem value="token">{wallet.coinSymbol} Token</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="amount">Amount ({tokenType === 'sol' ? 'SOL' : wallet.coinSymbol})</Label>
           <Input
             id="amount"
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            placeholder="Enter amount in SOL"
+            placeholder={`Enter amount in ${tokenType === 'sol' ? 'SOL' : wallet.coinSymbol}`}
             step="0.000000001"
             min="0"
           />
