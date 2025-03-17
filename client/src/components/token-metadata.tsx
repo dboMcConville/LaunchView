@@ -1,18 +1,25 @@
-import { useState, useEffect } from 'react';
-import { getTokenMetadata } from '@/lib/token-service';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useState, useEffect } from "react";
+import { getTokenMetadata } from "@/lib/token-service";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Loader2, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { intervalToDuration, formatDuration } from "date-fns";
 import {
   differenceInMinutes,
   differenceInHours,
   differenceInDays,
   differenceInMonths,
   differenceInYears,
-} from 'date-fns';
-import { useQuery } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import React from 'react';
+} from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import React from "react";
 
 interface TokenMetadataProps {
   address: string;
@@ -33,8 +40,10 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
   const { data: priceData } = useQuery({
     queryKey: [`https://api.jup.ag/price/v2?ids=${address}&showExtraInfo=true`],
     queryFn: async () => {
-      const response = await fetch(`https://api.jup.ag/price/v2?ids=${address}&showExtraInfo=true`);
-      if (!response.ok) throw new Error('Failed to fetch price data');
+      const response = await fetch(
+        `https://api.jup.ag/price/v2?ids=${address}&showExtraInfo=true`,
+      );
+      if (!response.ok) throw new Error("Failed to fetch price data");
       return response.json();
     },
     enabled: !!address,
@@ -45,18 +54,18 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
       try {
         setLoading(true);
         setError(null);
-        console.log('Fetching token metadata from Jupiter for', address);
+        console.log("Fetching token metadata from Jupiter for", address);
         const data = await getTokenMetadata(address);
-        console.log('Found token in Jupiter:', data);
+        console.log("Found token in Jupiter:", data);
         setMetadata(data || {});
       } catch (err) {
         const errorMessage = (err as Error).message;
         setError(
-          errorMessage.includes('Token not found')
+          errorMessage.includes("Token not found")
             ? `Token ${address} was not found on Jupiter or Solana.`
-            : `Error fetching token data: ${errorMessage}`
+            : `Error fetching token data: ${errorMessage}`,
         );
-        console.error('Token metadata error:', err);
+        console.error("Token metadata error:", err);
       } finally {
         setLoading(false);
       }
@@ -75,35 +84,24 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
     const supply = parseFloat(tokenSupply.data.amount);
     const decimals = tokenSupply.data.decimals;
 
-    return (supply / (10 ** decimals)) * price;
+    return (supply / 10 ** decimals) * price;
   }, [tokenSupply, priceData, address]);
 
   const getTimeAgo = (createdAt: string) => {
-    if (!createdAt) return 'Unknown';
+    if (!createdAt) return "Unknown";
+
     const createdDate = new Date(createdAt);
     const now = new Date();
 
-    const years = differenceInYears(now, createdDate);
-    const months = differenceInMonths(now, createdDate) % 12;
-    const days = differenceInDays(now, createdDate);
-    const hours = differenceInHours(now, createdDate) % 24;
-    const minutes = differenceInMinutes(now, createdDate) % 60;
+    const duration = intervalToDuration({ start: createdDate, end: now });
 
-    let timeAgo = [];
-
-    if (years > 0) timeAgo.push(`${years} year${years > 1 ? 's' : ''}`);
-    if (months > 0) timeAgo.push(`${months} month${months > 1 ? 's' : ''}`);
-
-    if (days > 0) {
-      timeAgo.push(`${days} day${days > 1 ? 's' : ''}`);
-    } else {
-      if (hours > 0) timeAgo.push(`${hours} hour${hours > 1 ? 's' : ''}`);
-      if (minutes > 0) timeAgo.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
-    }
-
-    return timeAgo.join(' ') + ' ago';
+    return (
+      formatDuration(duration, {
+        format: ["years", "months", "days", "hours", "minutes"],
+        delimiter: ", ",
+      }) + " ago"
+    );
   };
-
   if (loading) {
     return (
       <Card>
@@ -118,7 +116,9 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertDescription>{error || "Failed to fetch token supply"}</AlertDescription>
+        <AlertDescription>
+          {error || "Failed to fetch token supply"}
+        </AlertDescription>
       </Alert>
     );
   }
@@ -144,7 +144,9 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
           <div>
             <h3 className="font-medium mb-1">Market Cap</h3>
             <p className="text-sm">
-              {marketCap !== null ? `$${marketCap.toLocaleString()}` : 'Calculating...'}
+              {marketCap !== null
+                ? `$${Math.round(marketCap).toLocaleString()}`
+                : "Calculating..."}
             </p>
           </div>
 
@@ -158,7 +160,9 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
           <div>
             <h3 className="font-medium mb-1">Created</h3>
             <p className="text-sm">
-              {metadata?.created_at ? getTimeAgo(metadata.created_at) : 'Unknown'}
+              {metadata?.created_at
+                ? getTimeAgo(metadata.created_at)
+                : "Unknown"}
             </p>
           </div>
 
@@ -168,7 +172,10 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
               <h3 className="font-medium mb-1">Tags</h3>
               <div className="flex gap-2 flex-wrap">
                 {metadata.tags.map((tag: string) => (
-                  <span key={tag} className="px-2 py-1 bg-secondary rounded-full text-xs">
+                  <span
+                    key={tag}
+                    className="px-2 py-1 bg-secondary rounded-full text-xs"
+                  >
                     {tag}
                   </span>
                 ))}
@@ -177,14 +184,15 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
           )}
 
           {/* 24h Volume */}
-          {metadata?.daily_volume !== undefined && metadata?.daily_volume !== null && (
-            <div>
-              <h3 className="font-medium mb-1">24h Volume</h3>
-              <p className="text-sm">
-                ${Number(metadata.daily_volume).toLocaleString()}
-              </p>
-            </div>
-          )}
+          {metadata?.daily_volume !== undefined &&
+            metadata?.daily_volume !== null && (
+              <div>
+                <h3 className="font-medium mb-1">24h Volume</h3>
+                <p className="text-sm">
+                  ${Math.round(Number(metadata.daily_volume)).toLocaleString()}
+                </p>
+              </div>
+            )}
         </div>
       </CardContent>
     </Card>
