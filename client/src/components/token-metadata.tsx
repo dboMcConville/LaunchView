@@ -25,19 +25,36 @@ interface TokenMetadataProps {
   address: string;
 }
 
+interface TokenSupplyResponse {
+  success: boolean;
+  data?: {
+    amount: string;
+    decimals: number;
+  };
+  error?: string;
+}
+
+interface PriceData {
+  data: {
+    [key: string]: {
+      price: number;
+    };
+  };
+}
+
 export function TokenMetadata({ address }: TokenMetadataProps) {
   const [metadata, setMetadata] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Use TanStack Query for token supply
-  const { data: tokenSupply, isError: isSupplyError } = useQuery({
+  const { data: tokenSupply } = useQuery<TokenSupplyResponse>({
     queryKey: [`/api/token-supply/${address}`],
     enabled: !!address,
   });
 
   // Use TanStack Query for price data
-  const { data: priceData } = useQuery({
+  const { data: priceData } = useQuery<PriceData>({
     queryKey: [`https://api.jup.ag/price/v2?ids=${address}&showExtraInfo=true`],
     queryFn: async () => {
       const response = await fetch(
@@ -102,6 +119,7 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
       }) + " ago"
     );
   };
+
   if (loading) {
     return (
       <Card>
@@ -112,12 +130,12 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
     );
   }
 
-  if (error || isSupplyError) {
+  if (error) {
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          {error || "Failed to fetch token supply"}
+          {error}
         </AlertDescription>
       </Alert>
     );

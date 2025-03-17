@@ -15,8 +15,40 @@ const requireAuth = (req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
+// Middleware to check admin status
+const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.isAuthenticated() || !req.user?.isAdmin) {
+    return res.status(403).json({ message: "Forbidden: Admin access required" });
+  }
+  next();
+};
+
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
+
+  // Admin routes for community wallet management
+  app.get("/api/admin/community-wallets", requireAdmin, async (req, res) => {
+    try {
+      const coins = await storage.getAllCoins();
+      const communityWallets = await storage.getAllCommunityWallets();
+
+      // Map wallets to their corresponding coins
+      const walletsWithCoinInfo = communityWallets.map(wallet => {
+        const coin = coins.find(c => c.id === wallet.coinId);
+        return {
+          ...wallet,
+          coinName: coin?.name || 'Unknown',
+          coinSymbol: coin?.symbol || 'Unknown',
+          contractAddress: coin?.contractAddress || 'Unknown'
+        };
+      });
+
+      res.json(walletsWithCoinInfo);
+    } catch (error) {
+      console.error("Error fetching community wallets:", error);
+      res.status(500).json({ message: (error as Error).message });
+    }
+  });
 
   // Token supply endpoint
   app.get("/api/token-supply/:mintAddress", async (req, res) => {

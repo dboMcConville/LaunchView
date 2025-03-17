@@ -1,5 +1,5 @@
-import { User, InsertUser, Coin, Vote, VoteResponse, Comment, WalletTransaction } from "@shared/schema";
-import { users, coins, votes, voteResponses, comments, walletTransactions } from "@shared/schema";
+import { User, InsertUser, Coin, Vote, VoteResponse, Comment, WalletTransaction, CommunityWallet, InsertCommunityWallet } from "@shared/schema";
+import { users, coins, votes, voteResponses, comments, walletTransactions, communityWallets } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, lte } from "drizzle-orm";
 import session from "express-session";
@@ -19,6 +19,12 @@ export interface IStorage {
   createCoin(coin: Omit<Coin, "id">): Promise<Coin>;
   getCoin(id: number): Promise<Coin | undefined>;
   getAllCoins(): Promise<Coin[]>;
+
+  // Community wallet operations
+  createCommunityWallet(wallet: InsertCommunityWallet): Promise<CommunityWallet>;
+  getCommunityWallet(coinId: number): Promise<CommunityWallet | undefined>;
+  updateCommunityWalletBalance(coinId: number, balance: string): Promise<CommunityWallet>;
+  getAllCommunityWallets(): Promise<CommunityWallet[]>;
 
   // Vote operations
   createVote(vote: Omit<Vote, "id">): Promise<Vote>;
@@ -95,6 +101,36 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(coins);
   }
 
+  // Community wallet methods
+  async createCommunityWallet(wallet: InsertCommunityWallet): Promise<CommunityWallet> {
+    const [newWallet] = await db.insert(communityWallets).values(wallet).returning();
+    return newWallet;
+  }
+
+  async getCommunityWallet(coinId: number): Promise<CommunityWallet | undefined> {
+    const [wallet] = await db
+      .select()
+      .from(communityWallets)
+      .where(eq(communityWallets.coinId, coinId));
+    return wallet;
+  }
+
+  async updateCommunityWalletBalance(coinId: number, balance: string): Promise<CommunityWallet> {
+    const [updatedWallet] = await db
+      .update(communityWallets)
+      .set({
+        balance,
+        lastUpdated: new Date(),
+      })
+      .where(eq(communityWallets.coinId, coinId))
+      .returning();
+    return updatedWallet;
+  }
+
+  async getAllCommunityWallets(): Promise<CommunityWallet[]> {
+    return await db.select().from(communityWallets);
+  }
+
   // Vote operations
   async createVote(vote: Omit<Vote, "id">): Promise<Vote> {
     const [newVote] = await db.insert(votes).values(vote).returning();
@@ -142,6 +178,7 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
   }
 
+  // Wallet transaction operations
   async createWalletTransaction(transaction: Omit<WalletTransaction, "id">): Promise<WalletTransaction> {
     const [newTransaction] = await db
       .insert(walletTransactions)

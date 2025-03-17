@@ -7,6 +7,7 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   connectedWallets: text("connected_wallets").array(),
+  isAdmin: boolean("is_admin").notNull().default(false),
 });
 
 export const coins = pgTable("coins", {
@@ -14,9 +15,15 @@ export const coins = pgTable("coins", {
   name: text("name").notNull(),
   symbol: text("symbol").notNull(),
   contractAddress: text("contract_address").notNull().unique(),
-  marketingWalletAddress: text("marketing_wallet_address").notNull(),
-  marketingWalletBalance: numeric("marketing_wallet_balance").notNull().default("0"),
   creatorId: integer("creator_id").notNull(),
+});
+
+export const communityWallets = pgTable("community_wallets", {
+  id: serial("id").primaryKey(),
+  coinId: integer("coin_id").notNull().unique(),
+  walletAddress: text("wallet_address").notNull().unique(),
+  balance: numeric("balance").notNull().default("0"),
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
 export const votes = pgTable("votes", {
@@ -65,6 +72,11 @@ export const insertCoinSchema = createInsertSchema(coins).pick({
   contractAddress: true,
 });
 
+export const insertCommunityWalletSchema = createInsertSchema(communityWallets).pick({
+  coinId: true,
+  walletAddress: true,
+});
+
 export const insertVoteSchema = createInsertSchema(votes).pick({
   coinId: true,
   title: true,
@@ -89,6 +101,21 @@ export const insertWalletTransactionSchema = createInsertSchema(walletTransactio
   description: true,
 });
 
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+export type Coin = typeof coins.$inferSelect;
+export type CommunityWallet = typeof communityWallets.$inferSelect;
+export type Vote = typeof votes.$inferSelect;
+export type VoteResponse = typeof voteResponses.$inferSelect;
+export type Comment = typeof comments.$inferSelect;
+export type WalletTransaction = typeof walletTransactions.$inferSelect;
+export type InsertCommunityWallet = z.infer<typeof insertCommunityWalletSchema>;
+export type InsertVote = z.infer<typeof insertVoteSchema>;
+export type InsertVoteResponse = z.infer<typeof insertVoteResponseSchema>;
+export type InsertComment = z.infer<typeof insertCommentSchema>;
+export type InsertWalletTransaction = z.infer<typeof insertWalletTransactionSchema>;
+export type InsertCoin = z.infer<typeof insertCoinSchema>;
+
 export const tokenSupplyResponseSchema = z.object({
   success: z.boolean(),
   data: z.object({
@@ -98,17 +125,8 @@ export const tokenSupplyResponseSchema = z.object({
   error: z.string().optional()
 });
 
-export type TokenSupplyResponse = z.infer<typeof tokenSupplyResponseSchema>;
-
 export const mintAddressSchema = z.object({
   mintAddress: z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/, "Invalid Solana address format")
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
-export type Coin = typeof coins.$inferSelect;
-export type Vote = typeof votes.$inferSelect;
-export type VoteResponse = typeof voteResponses.$inferSelect;
-export type Comment = typeof comments.$inferSelect;
-export type WalletTransaction = typeof walletTransactions.$inferSelect;
-export type InsertWalletTransaction = z.infer<typeof insertWalletTransactionSchema>;
+export type TokenSupplyResponse = z.infer<typeof tokenSupplyResponseSchema>;
