@@ -91,7 +91,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Coin routes
-  app.post("/api/coins/add", requireAuth, async (req, res) => {
+  app.post("/api/coins/add", requireAdmin, async (req, res) => {
     try {
       const { address } = req.body;
       if (!address) {
@@ -125,9 +125,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const privateKeyHex = Buffer.from(walletKeypair.secretKey).toString('hex');
       process.env[`WALLET_PRIVATE_KEY_${coin.id}`] = privateKeyHex;
 
-      console.log(`Created new wallet for coin ${coin.id}:`);
-      console.log(`Public address: ${walletAddress}`);
-      console.log(`Private key (hex): ${privateKeyHex}`);
+      // Only log sensitive information if the user is an admin
+      if (req.user?.isAdmin) {
+        console.log(`Created new wallet for coin ${coin.id}:`);
+        console.log(`Public address: ${walletAddress}`);
+        console.log(`Private key (hex): ${privateKeyHex}`);
+      }
 
       // Create community wallet for the coin
       await storage.createCommunityWallet({
@@ -191,10 +194,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newBalance = (accountInfo?.lamports || 0).toString();
       await storage.updateCommunityWalletBalance(wallet.coinId, newBalance);
 
-      res.json({ 
+      res.json({
         message: "Transfer successful",
         signature,
-        newBalance 
+        newBalance
       });
     } catch (error) {
       console.error("Transfer error:", error);

@@ -20,14 +20,20 @@ export default function CreatePage() {
     resolver: zodResolver(insertCoinSchema),
   });
 
+  // If user is not an admin, redirect to home
+  if (!user?.isAdmin) {
+    navigate("/");
+    return null;
+  }
+
   const createCoin = async (data: any) => {
     try {
-      await apiRequest("POST", "/api/coins", data);
+      await apiRequest("POST", "/api/coins/add", data);
       // Invalidate the coins query to trigger a refetch
       queryClient.invalidateQueries({ queryKey: ["/api/coins"] });
       toast({
         title: "Success",
-        description: "Your coin has been created successfully. A marketing wallet has been automatically generated.",
+        description: "Your coin has been created successfully. A community wallet has been automatically generated. Check the console for wallet details.",
       });
       navigate("/");
     } catch (error) {
@@ -54,27 +60,17 @@ export default function CreatePage() {
           <CardHeader>
             <CardTitle>Coin Details</CardTitle>
             <CardDescription>
-              Fill in the basic information about your coin. A marketing wallet will be automatically created.
+              Fill in the basic information about your coin. A community wallet will be automatically created.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={form.handleSubmit(createCoin)} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="name">Coin Name</Label>
-                <Input id="name" {...form.register("name")} />
-                {form.formState.errors.name && (
+                <Label htmlFor="contractAddress">Contract Address</Label>
+                <Input id="contractAddress" {...form.register("contractAddress")} />
+                {form.formState.errors.contractAddress && (
                   <p className="text-sm text-destructive">
-                    {form.formState.errors.name.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="symbol">Symbol</Label>
-                <Input id="symbol" {...form.register("symbol")} />
-                {form.formState.errors.symbol && (
-                  <p className="text-sm text-destructive">
-                    {form.formState.errors.symbol.message}
+                    {form.formState.errors.contractAddress.message?.toString()}
                   </p>
                 )}
               </div>
