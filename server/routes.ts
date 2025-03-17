@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { insertCoinSchema, insertVoteSchema, insertCommentSchema, mintAddressSchema, tokenSupplyResponseSchema } from "@shared/schema";
-import { Connection, PublicKey } from "@solana/web3.js";
+import { Connection, PublicKey, Keypair } from "@solana/web3.js";
 import * as token from "@solana/spl-token";
 import { z } from "zod";
 
@@ -122,18 +122,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(existingCoin);
       }
 
-      // Generate a new marketing wallet address
-      // In production, this would involve actual Solana wallet creation
-      const marketingWalletAddress = `marketing_${Date.now().toString(36)}`;
-
       // Create new coin
       const coin = await storage.createCoin({
         name: `Coin ${address.substring(0, 8)}`,
         symbol: address.substring(0, 4).toUpperCase(),
         contractAddress: address,
-        marketingWalletAddress,
         creatorId: req.user!.id,
-        marketingWalletBalance: "0",
+      });
+
+      // Generate a new Solana keypair for the community wallet
+      const walletKeypair = Keypair.generate();
+      const walletAddress = walletKeypair.publicKey.toString();
+
+      // Create community wallet for the coin
+      await storage.createCommunityWallet({
+        coinId: coin.id,
+        walletAddress,
       });
 
       console.log("Created new coin:", coin);
