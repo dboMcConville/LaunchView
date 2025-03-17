@@ -10,9 +10,9 @@ import {
   differenceInMonths,
   differenceInYears,
 } from 'date-fns';
-
-// 1) Import the Solana web3 objects
-import { Connection, PublicKey } from '@solana/web3.js';
+import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import React from 'react';
 
 interface TokenMetadataProps {
   address: string;
@@ -22,12 +22,25 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
   const [metadata, setMetadata] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [marketCap, setMarketCap] = useState<number | null>(null);
+
+  // Use TanStack Query for token supply
+  const { data: tokenSupply, isError: isSupplyError } = useQuery({
+    queryKey: [`/api/token-supply/${address}`],
+    enabled: !!address,
+  });
+
+  // Use TanStack Query for price data
+  const { data: priceData } = useQuery({
+    queryKey: [`https://api.jup.ag/price/v2?ids=${address}&showExtraInfo=true`],
+    queryFn: async () => {
+      const response = await fetch(`https://api.jup.ag/price/v2?ids=${address}&showExtraInfo=true`);
+      if (!response.ok) throw new Error('Failed to fetch price data');
+      return response.json();
+    },
+    enabled: !!address,
+  });
 
   useEffect(() => {
-    /**
-     * Fetch your metadata from Jupiter (as before).
-     */
     async function fetchMetadata() {
       try {
         setLoading(true);
@@ -49,59 +62,22 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
       }
     }
 
-    /**
-     * 2) Fetch Market Cap:
-     *    - Price from Jupiter
-     *    - Token supply from @solana/web3.js (instead of manual fetch to RPC).
-     */
-    async function fetchMarketCap() {
-      try {
-        // (A) Get Price from Jupiter
-        const priceResponse = await fetch(
-          `https://api.jup.ag/price/v2?ids=${address}&showExtraInfo=true`
-        );
-        if (!priceResponse.ok) {
-          console.error('Failed Jupiter fetch with status:', priceResponse.status);
-          throw new Error('Failed to fetch Jupiter price');
-        }
-
-        const priceData = await priceResponse.json();
-        const price = priceData?.data?.[address]?.price || 0;
-        console.log('Parsed Jupiter price:', price);
-
-        // (B) Get Supply from Solana using web3.js
-        const connection = new Connection('https://api.mainnet-beta.solana.com');
-        const publicKey = new PublicKey(address);
-        const supplyResponse = await connection.getTokenSupply(publicKey);
-        // supplyResponse.value = { amount: string, decimals: number }
-        const { amount, decimals } = supplyResponse.value || { amount: '0', decimals: 0 };
-        const rawSupply = parseFloat(amount);
-        const adjustedSupply = rawSupply / 10 ** decimals;
-
-        console.log(`Raw supply: ${amount} / decimals: ${decimals} => adjusted: ${adjustedSupply}`);
-
-        // (C) Calculate Market Cap
-        const mc = price * adjustedSupply;
-        console.log('Calculated Market Cap:', mc);
-
-        setMarketCap(mc);
-      } catch (err) {
-        console.error('Error fetching market cap:', err);
-        setMarketCap(null);
-      }
-    }
-
     if (address) {
-      fetchMetadata().then(() => {
-        // Once metadata is fetched, also fetch the Market Cap
-        fetchMarketCap();
-      });
+      fetchMetadata();
     }
   }, [address]);
 
-  /**
-   * Helper for 'Created' time (unchanged).
-   */
+  // Calculate market cap
+  const marketCap = React.useMemo(() => {
+    if (!tokenSupply?.data || !priceData?.data?.[address]?.price) return null;
+
+    const price = priceData.data[address].price;
+    const supply = parseFloat(tokenSupply.data.amount);
+    const decimals = tokenSupply.data.decimals;
+
+    return (supply / (10 ** decimals)) * price;
+  }, [tokenSupply, priceData, address]);
+
   const getTimeAgo = (createdAt: string) => {
     if (!createdAt) return 'Unknown';
     const createdDate = new Date(createdAt);
@@ -128,7 +104,24 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
     return timeAgo.join(' ') + ' ago';
   };
 
-  // --- Render the component as before ---
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-10">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error || isSupplyError) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>{error || "Failed to fetch token supply"}</AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <Card>
@@ -151,7 +144,7 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
           <div>
             <h3 className="font-medium mb-1">Market Cap</h3>
             <p className="text-sm">
-              {marketCap !== null ? `$${marketCap.toLocaleString()}` : 'Fetching...'}
+              {marketCap !== null ? `$${marketCap.toLocaleString()}` : 'Calculating...'}
             </p>
           </div>
 
