@@ -63,9 +63,25 @@ function TransferDialog({ wallet, onClose }: TransferDialogProps) {
   const { data: tokens, isLoading: isLoadingTokens } = useQuery<TokenInfo[]>({
     queryKey: [`/api/admin/community-wallets/${wallet.id}/tokens`],
     enabled: !!wallet.id,
+    onSuccess: (data) => {
+      console.log("Fetched tokens:", data);
+      // If we don't have a selected token yet, select the first one
+      if (!selectedToken && data?.length > 0) {
+        setSelectedToken(data[0].mint);
+      }
+    },
+    onError: (error) => {
+      console.error("Error fetching tokens:", error);
+      toast({
+        title: "Error loading tokens",
+        description: error instanceof Error ? error.message : "Failed to load wallet tokens",
+        variant: "destructive",
+      });
+    }
   });
 
   const selectedTokenInfo = tokens?.find(t => t.mint === selectedToken);
+  console.log("Selected token info:", selectedTokenInfo);
 
   const handleTransfer = async () => {
     try {
