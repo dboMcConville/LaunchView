@@ -24,8 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Send } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-
-import { useEffect } from "react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 const LAMPORTS_PER_SOL = 1e9; // 1 SOL = 1,000,000,000 lamports
 
@@ -53,106 +52,128 @@ interface TransferDialogProps {
   onClose: () => void;
 }
 
-const TransferDialog = ({ wallet, onClose }) => {
-  const [availableTokens, setAvailableTokens] = useState([]);
-  const [selectedTokenMint, setSelectedTokenMint] = useState("sol");
+function TransferDialog({ wallet, onClose }: TransferDialogProps) {
+  const [selectedToken, setSelectedToken] = useState<string>('native');
   const [amount, setAmount] = useState("");
   const [destinationAddress, setDestinationAddress] = useState("");
   const [isTransferring, setIsTransferring] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    async function fetchTokens() {
-      try {
-        const res = await fetch(`/api/wallet/${wallet.walletAddress}/tokens`);
-        const tokens = await res.json();
-        setAvailableTokens(tokens);
-      } catch (err) {
-        toast({
-          title: "Failed to load tokens",
-          description: err.message,
-          variant: "destructive",
-        });
-      }
-  };
-
-  fetchAvailableTokens();
-}, [wallet.walletAddress]);
-
-// Handle transfer logic
-const handleTransfer = async () => {
-  setIsTransferring(true);
-  const isSol = selectedTokenMint === 'sol';
-
-  const response = await fetch('/api/transfer', {
-    method: "POST",
-    body: JSON.stringify({
-      amount,
-      tokenMint: isSol ? null : selectedTokenMint,
-      destinationAddress,
-      walletAddress: wallet.walletAddress
-    }),
+  // Fetch available tokens in the wallet
+  const { data: tokens, isLoading: isLoadingTokens } = useQuery<TokenInfo[]>({
+    queryKey: [`/api/admin/community-wallets/${wallet.id}/tokens`],
+    enabled: !!wallet.id,
   });
 
-  // existing response/error handling logic
-};
+  const selectedTokenInfo = tokens?.find(t => t.mint === selectedToken);
 
-// JSX:
-return (
-  <DialogContent>
-    <DialogHeader>
-      <DialogTitle>Transfer Tokens</DialogTitle>
-    </DialogHeader>
-    <div className="space-y-4 py-4">
-      <div className="space-y-2">
-        <Label>From Wallet</Label>
-        <Input disabled value={wallet.walletAddress} />
+  const handleTransfer = async () => {
+    try {
+      setIsTransferring(true);
+      const response = await apiRequest("POST", `/api/admin/community-wallets/${wallet.id}/transfer`, {
+        amount,
+        destinationAddress,
+        tokenType: selectedToken === 'native' ? 'sol' : 'token',
+        tokenAddress: selectedToken === 'native' ? null : selectedToken,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message);
+      }
+
+      const result = await response.json();
+
+      toast({
+        title: "Transfer successful",
+        description: `Successfully transferred ${amount} ${selectedTokenInfo?.symbol}`,
+      });
+
+      // Invalidate the community wallets query to refresh the data
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/community-wallets"] });
+      onClose();
+    } catch (error) {
+      toast({
+        title: "Transfer failed",
+        description: (error as Error).message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsTransferring(false);
+    }
+  };
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Transfer Funds - {wallet.coinName}</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-4 py-4">
+        <div className="space-y-2">
+          <Label>From Wallet</Label>
+          <Input disabled value={wallet.walletAddress} />
+        </div>
+        <div className="space-y-2">
+          <Label>Token</Label>
+          {isLoadingTokens ? (
+            <div className="flex items-center justify-center p-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
+          ) : (
+            <Select value={selectedToken} onValueChange={setSelectedToken}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select token" />
+              </SelectTrigger>
+              <SelectContent>
+                {tokens?.map((token) => (
+                  <SelectItem key={token.mint} value={token.mint}>
+                    {token.symbol} ({token.balance} available)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="amount">Amount ({selectedTokenInfo?.symbol})</Label>
+          <Input
+            id="amount"
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder={`Enter amount in ${selectedTokenInfo?.symbol}`}
+            step="0.000000001"
+            min="0"
+            max={selectedTokenInfo?.balance.toString()}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="destination">Destination Address</Label>
+          <Input
+            id="destination"
+            value={destinationAddress}
+            onChange={(e) => setDestinationAddress(e.target.value)}
+            placeholder="Enter destination wallet address"
+          />
+        </div>
+        <Button
+          onClick={handleTransfer}
+          className="w-full"
+          disabled={isTransferring || !selectedTokenInfo}
+        >
+          {isTransferring ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Transferring...
+            </>
+          ) : (
+            "Transfer"
+          )}
+        </Button>
       </div>
-
-      <div className="space-y-2">
-        <Label>Token Type</Label>
-        <Select value={selectedTokenMint} onValueChange={setSelectedTokenMint}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select token type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="sol">SOL (Native)</SelectItem>
-            {availableTokens.map(token => (
-              <SelectItem key={token.mint} value={token.mint}>
-                {token.mint.slice(0,4)}...{token.mint.slice(-4)} ({token.tokenAmount})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="amount">Amount</Label>
-        <Input
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="Enter amount"
-          type="number"
-          min={0}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label>Destination Wallet</Label>
-        <Input
-          value={destinationAddress}
-          onChange={(e) => setDestinationAddress(e.target.value)}
-          placeholder="Enter wallet address"
-        />
-      </div>
-
-      <Button onClick={handleTransfer} disabled={isTransferring}>
-        {isTransferring ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-        Transfer
-      </Button>
-    </div>
-  </DialogContent>
-);
+    </DialogContent>
+  );
+}
 
 function AdminDashboard() {
   const { user } = useAuth();
