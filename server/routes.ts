@@ -2,8 +2,21 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertCoinSchema, insertVoteSchema, insertCommentSchema, mintAddressSchema, tokenSupplyResponseSchema } from "@shared/schema";
-import { Connection, PublicKey, Keypair, Transaction, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import {
+  insertCoinSchema,
+  insertVoteSchema,
+  insertCommentSchema,
+  mintAddressSchema,
+  tokenSupplyResponseSchema,
+} from "@shared/schema";
+import {
+  Connection,
+  PublicKey,
+  Keypair,
+  Transaction,
+  SystemProgram,
+  LAMPORTS_PER_SOL,
+} from "@solana/web3.js";
 import * as token from "@solana/spl-token";
 import { z } from "zod";
 
@@ -18,7 +31,9 @@ const requireAuth = (req: Request, res: Response, next: NextFunction) => {
 // Middleware to check admin status
 const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
   if (!req.isAuthenticated() || !req.user?.isAdmin) {
-    return res.status(403).json({ message: "Forbidden: Admin access required" });
+    return res
+      .status(403)
+      .json({ message: "Forbidden: Admin access required" });
   }
   next();
 };
@@ -26,8 +41,10 @@ const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
 // Add transfer validation schema
 const transferSchema = z.object({
   amount: z.string(),
-  destinationAddress: z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/, "Invalid Solana address format"),
-  tokenType: z.enum(['sol', 'token']),
+  destinationAddress: z
+    .string()
+    .regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/, "Invalid Solana address format"),
+  tokenType: z.enum(["sol", "token"]),
   tokenAddress: z.string().nullable(),
 });
 
@@ -41,13 +58,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const communityWallets = await storage.getAllCommunityWallets();
 
       // Map wallets to their corresponding coins
-      const walletsWithCoinInfo = communityWallets.map(wallet => {
-        const coin = coins.find(c => c.id === wallet.coinId);
+      const walletsWithCoinInfo = communityWallets.map((wallet) => {
+        const coin = coins.find((c) => c.id === wallet.coinId);
         return {
           ...wallet,
-          coinName: coin?.name || 'Unknown',
-          coinSymbol: coin?.symbol || 'Unknown',
-          contractAddress: coin?.contractAddress || 'Unknown'
+          coinName: coin?.name || "Unknown",
+          coinSymbol: coin?.symbol || "Unknown",
+          contractAddress: coin?.contractAddress || "Unknown",
         };
       });
 
@@ -62,10 +79,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/token-supply/:mintAddress", async (req, res) => {
     try {
       // Validate mint address format
-      const { mintAddress } = mintAddressSchema.parse({ mintAddress: req.params.mintAddress });
+      const { mintAddress } = mintAddressSchema.parse({
+        mintAddress: req.params.mintAddress,
+      });
 
       // Connect to Solana mainnet
-      const connection = new Connection("https://api.mainnet-beta.solana.com", "confirmed");
+      const connection = new Connection(
+        "https://api.mainnet-beta.solana.com",
+        "confirmed",
+      );
       const mintPubkey = new PublicKey(mintAddress);
 
       // Get mint info and supply
@@ -75,8 +97,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: true,
         data: {
           amount: mintInfo.supply.toString(),
-          decimals: mintInfo.decimals
-        }
+          decimals: mintInfo.decimals,
+        },
       });
 
       res.json(response);
@@ -85,7 +107,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const errorResponse = tokenSupplyResponseSchema.parse({
         success: false,
-        error: error instanceof Error ? error.message : "Failed to fetch token supply"
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch token supply",
       });
 
       res.status(400).json(errorResponse);
@@ -97,14 +122,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { address } = req.body;
       if (!address) {
-        return res.status(400).json({ message: "Contract address is required" });
+        return res
+          .status(400)
+          .json({ message: "Contract address is required" });
       }
 
       console.log("Adding new coin with contract address:", address);
 
       // Check if coin already exists
       const coins = await storage.getAllCoins();
-      const existingCoin = coins.find(c => c.contractAddress === address);
+      const existingCoin = coins.find((c) => c.contractAddress === address);
 
       if (existingCoin) {
         console.log("Coin already exists:", existingCoin);
@@ -122,7 +149,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate a new Solana keypair for the community wallet
       const walletKeypair = Keypair.generate();
       const walletAddress = walletKeypair.publicKey.toString();
-      const privateKeyHex = Buffer.from(walletKeypair.secretKey).toString('hex');
+      const privateKeyHex = Buffer.from(walletKeypair.secretKey).toString(
+        "hex",
+      );
 
       // Create community wallet for the coin with private key stored in database
       await storage.createCommunityWallet({
@@ -140,103 +169,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add new transfer endpoint
-  app.post("/api/admin/community-wallets/:walletId/transfer", requireAdmin, async (req, res) => {
-    try {
-      const { amount, destinationAddress, tokenType, tokenAddress } = transferSchema.parse(req.body);
+  app.post(
+    "/api/admin/community-wallets/:walletId/transfer",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const { amount, destinationAddress, tokenType, tokenAddress } =
+          transferSchema.parse(req.body);
 
-      // Connect to Solana network
-      const connection = new Connection("https://api.mainnet-beta.solana.com", "confirmed");
-
-      // Get wallet details
-      const wallet = await storage.getCommunityWallet(parseInt(req.params.walletId));
-      if (!wallet) {
-        return res.status(404).json({ message: "Wallet not found" });
-      }
-
-      const fromPubkey = new PublicKey(wallet.walletAddress);
-      const toPubkey = new PublicKey(destinationAddress);
-
-      let transaction = new Transaction();
-
-      if (tokenType === 'sol') {
-        // Transfer SOL
-        transaction.add(
-          SystemProgram.transfer({
-            fromPubkey,
-            toPubkey,
-            lamports: Math.floor(parseFloat(amount) * LAMPORTS_PER_SOL),
-          })
-        );
-      } else if (tokenType === 'token' && tokenAddress) {
-        // Transfer SPL Token
-        const tokenPublicKey = new PublicKey(tokenAddress);
-        const fromTokenAccount = await token.getAssociatedTokenAddress(
-          tokenPublicKey,
-          fromPubkey
-        );
-        const toTokenAccount = await token.getAssociatedTokenAddress(
-          tokenPublicKey,
-          toPubkey
+        // Connect to Solana network
+        const connection = new Connection(
+          "https://api.mainnet-beta.solana.com",
+          "confirmed",
         );
 
-        // Check if destination token account exists
-        const toTokenAccountInfo = await connection.getAccountInfo(toTokenAccount);
+        // Get wallet details
+        const wallet = await storage.getCommunityWallet(
+          parseInt(req.params.walletId),
+        );
+        if (!wallet) {
+          return res.status(404).json({ message: "Wallet not found" });
+        }
 
-        if (!toTokenAccountInfo) {
-          // Create associated token account for destination if it doesn't exist
+        const fromPubkey = new PublicKey(wallet.walletAddress);
+        const toPubkey = new PublicKey(destinationAddress);
+
+        let transaction = new Transaction();
+
+        if (tokenType === "sol") {
+          // Transfer SOL
           transaction.add(
-            token.createAssociatedTokenAccountInstruction(
-              fromPubkey, // payer
-              toTokenAccount,
+            SystemProgram.transfer({
+              fromPubkey,
               toPubkey,
-              tokenPublicKey
-            )
+              lamports: Math.floor(parseFloat(amount) * LAMPORTS_PER_SOL),
+            }),
+          );
+        } else if (tokenType === "token" && tokenAddress) {
+          // Transfer SPL Token
+          const tokenPublicKey = new PublicKey(tokenAddress);
+          const fromTokenAccount = await token.getAssociatedTokenAddress(
+            tokenPublicKey,
+            fromPubkey,
+          );
+          const toTokenAccount = await token.getAssociatedTokenAddress(
+            tokenPublicKey,
+            toPubkey,
+          );
+
+          // Check if destination token account exists
+          const toTokenAccountInfo =
+            await connection.getAccountInfo(toTokenAccount);
+
+          if (!toTokenAccountInfo) {
+            // Create associated token account for destination if it doesn't exist
+            transaction.add(
+              token.createAssociatedTokenAccountInstruction(
+                fromPubkey, // payer
+                toTokenAccount,
+                toPubkey,
+                tokenPublicKey,
+              ),
+            );
+          }
+
+          // Add token transfer instruction
+          transaction.add(
+            token.createTransferInstruction(
+              fromTokenAccount,
+              toTokenAccount,
+              fromPubkey,
+              BigInt(Math.floor(parseFloat(amount) * Math.pow(10, 9))), // assuming 9 decimals
+            ),
           );
         }
 
-        // Add token transfer instruction
-        transaction.add(
-          token.createTransferInstruction(
-            fromTokenAccount,
-            toTokenAccount,
-            fromPubkey,
-            BigInt(Math.floor(parseFloat(amount) * Math.pow(10, 9))) // assuming 9 decimals
-          )
+        // Get recent blockhash
+        const { blockhash } = await connection.getLatestBlockhash();
+        transaction.recentBlockhash = blockhash;
+
+        // Sign and send transaction using private key from database
+        const signer = Keypair.fromSecretKey(
+          Buffer.from(wallet.privateKey, "hex"),
         );
+        transaction.sign(signer);
+
+        const signature = await connection.sendRawTransaction(
+          transaction.serialize(),
+        );
+        await connection.confirmTransaction(signature);
+
+        // Update wallet balance in database
+        const accountInfo = await connection.getAccountInfo(fromPubkey);
+        const newBalance = (accountInfo?.lamports || 0).toString();
+        await storage.updateCommunityWalletBalance(wallet.coinId, newBalance);
+
+        res.json({
+          message: "Transfer successful",
+          signature,
+          newBalance,
+        });
+      } catch (error) {
+        console.error("Transfer error:", error);
+        res.status(400).json({ message: (error as Error).message });
       }
-
-      // Get recent blockhash
-      const { blockhash } = await connection.getLatestBlockhash();
-      transaction.recentBlockhash = blockhash;
-
-      // Sign and send transaction using private key from database
-      const signer = Keypair.fromSecretKey(Buffer.from(wallet.privateKey, 'hex'));
-      transaction.sign(signer);
-
-      const signature = await connection.sendRawTransaction(transaction.serialize());
-      await connection.confirmTransaction(signature);
-
-      // Update wallet balance in database
-      const accountInfo = await connection.getAccountInfo(fromPubkey);
-      const newBalance = (accountInfo?.lamports || 0).toString();
-      await storage.updateCommunityWalletBalance(wallet.coinId, newBalance);
-
-      res.json({
-        message: "Transfer successful",
-        signature,
-        newBalance
-      });
-    } catch (error) {
-      console.error("Transfer error:", error);
-      res.status(400).json({ message: (error as Error).message });
-    }
-  });
+    },
+  );
 
   app.get("/api/coins/address/:address", async (req, res) => {
     try {
       console.log("Looking up coin with contract address:", req.params.address);
       const coins = await storage.getAllCoins();
-      const coin = coins.find(c => c.contractAddress === req.params.address);
+      const coin = coins.find((c) => c.contractAddress === req.params.address);
 
       if (coin) {
         console.log("Found coin:", coin);
@@ -263,7 +307,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Transaction routes
   app.get("/api/coins/:coinId/transactions", async (req, res) => {
     try {
-      const transactions = await storage.getWalletTransactions(parseInt(req.params.coinId));
+      const transactions = await storage.getWalletTransactions(
+        parseInt(req.params.coinId),
+      );
       res.json(transactions);
     } catch (error) {
       res.status(500).json({ message: (error as Error).message });
@@ -327,7 +373,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const lastComments = await storage.getLastComments(req.user!.id, 3);
 
       if (lastComments.length === 3) {
-        return res.status(400).json({ message: "Cannot post more than 3 consecutive comments" });
+        return res
+          .status(400)
+          .json({ message: "Cannot post more than 3 consecutive comments" });
       }
 
       const comment = await storage.createComment({
@@ -343,65 +391,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/coins/:coinId/comments", async (req, res) => {
-    const comments = await storage.getCommentsByCoin(parseInt(req.params.coinId));
+    const comments = await storage.getCommentsByCoin(
+      parseInt(req.params.coinId),
+    );
     res.json(comments);
   });
 
-
   // Add new endpoint to get token accounts for a wallet
-  app.get("/api/admin/community-wallets/:walletId/tokens", requireAdmin, async (req, res) => {
-    try {
-      const wallet = await storage.getCommunityWallet(parseInt(req.params.walletId));
-      if (!wallet) {
-        return res.status(404).json({ message: "Wallet not found" });
-      }
-
-      // Connect to Solana network
-      const connection = new Connection("https://api.mainnet-beta.solana.com", "confirmed");
-      const walletPublicKey = new PublicKey(wallet.walletAddress);
-
-      // Get all token accounts owned by the wallet
-      const tokenAccounts = await connection.getParsedTokenAccountsByOwner(walletPublicKey, {
-        programId: token.TOKEN_PROGRAM_ID,
-      });
-
-      // Get SOL balance
-      const solBalance = await connection.getBalance(walletPublicKey);
-
-      // Format token data
-      const tokens = [{
-        symbol: 'SOL',
-        name: 'Solana',
-        mint: 'native',
-        balance: solBalance / LAMPORTS_PER_SOL,
-        decimals: 9,
-      }];
-
-      // Add SPL tokens
-      for (const { account } of tokenAccounts.value) {
-        const parsedInfo = account.data.parsed.info;
-
-        // Log token account info for debugging
-        console.log("Token account info:", JSON.stringify(parsedInfo, null, 2));
-
-        if (parsedInfo.tokenAmount && parsedInfo.tokenAmount.uiAmount > 0) {
-          tokens.push({
-            symbol: parsedInfo.symbol || 'Unknown',
-            name: parsedInfo.name || 'Unknown Token',
-            mint: parsedInfo.mint,
-            balance: parsedInfo.tokenAmount.uiAmount,
-            decimals: parsedInfo.tokenAmount.decimals,
-          });
+  app.get(
+    "/api/admin/community-wallets/:walletId/tokens",
+    requireAdmin,
+    async (req, res) => {
+      try {
+        const wallet = await storage.getCommunityWallet(
+          parseInt(req.params.walletId),
+        );
+        if (!wallet) {
+          return res.status(404).json({ message: "Wallet not found" });
         }
-      }
 
-      console.log("Available tokens:", tokens);
-      res.json(tokens);
-    } catch (error) {
-      console.error("Error fetching token accounts:", error);
-      res.status(500).json({ message: (error as Error).message });
-    }
-  });
+        // Connect to Solana network
+        const connection = new Connection(
+          "https://api.mainnet-beta.solana.com",
+          "confirmed",
+        );
+        const walletPublicKey = new PublicKey(wallet.walletAddress);
+
+        // Get all token accounts owned by the wallet
+        const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
+          walletPublicKey,
+          {
+            programId: token.TOKEN_PROGRAM_ID,
+          },
+        );
+
+        // Get SOL balance
+        const solBalance = await connection.getBalance(walletPublicKey);
+
+        // Format token data
+        const tokens = [
+          {
+            symbol: "SOL",
+            name: "Solana",
+            mint: "native",
+            balance: solBalance / LAMPORTS_PER_SOL,
+            decimals: 9,
+          },
+        ];
+
+        // Add SPL tokens
+        for (const { account } of tokenAccounts.value) {
+          const parsedInfo = account.data.parsed.info;
+
+          // Log token account info for debugging
+          console.log(
+            "Token account info:",
+            JSON.stringify(parsedInfo, null, 2),
+          );
+
+          if (parsedInfo.tokenAmount && parsedInfo.tokenAmount.uiAmount > 0) {
+            tokens.push({
+              symbol: parsedInfo.symbol || "Unknown",
+              name: parsedInfo.name || "Unknown Token",
+              mint: parsedInfo.mint,
+              balance: parsedInfo.tokenAmount.uiAmount,
+              decimals: parsedInfo.tokenAmount.decimals,
+            });
+          }
+        }
+
+        console.log("Available tokens:", tokens);
+        res.json(tokens);
+      } catch (error) {
+        console.error("Error fetching token accounts:", error);
+        res.status(500).json({ message: (error as Error).message });
+      }
+    },
+  );
 
   const httpServer = createServer(app);
   return httpServer;

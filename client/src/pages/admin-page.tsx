@@ -20,7 +20,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2, Send } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -53,7 +59,7 @@ interface TransferDialogProps {
 }
 
 function TransferDialog({ wallet, onClose }: TransferDialogProps) {
-  const [selectedToken, setSelectedToken] = useState<string>('native');
+  const [selectedToken, setSelectedToken] = useState<string>("native");
   const [amount, setAmount] = useState("");
   const [destinationAddress, setDestinationAddress] = useState("");
   const [isTransferring, setIsTransferring] = useState(false);
@@ -65,17 +71,21 @@ function TransferDialog({ wallet, onClose }: TransferDialogProps) {
     enabled: !!wallet.id,
   });
 
-  const selectedTokenInfo = tokens?.find(t => t.mint === selectedToken);
+  const selectedTokenInfo = tokens?.find((t) => t.mint === selectedToken);
 
   const handleTransfer = async () => {
     try {
       setIsTransferring(true);
-      const response = await apiRequest("POST", `/api/admin/community-wallets/${wallet.id}/transfer`, {
-        amount,
-        destinationAddress,
-        tokenType: selectedToken === 'native' ? 'sol' : 'token',
-        tokenAddress: selectedToken === 'native' ? null : selectedToken,
-      });
+      const response = await apiRequest(
+        "POST",
+        `/api/admin/community-wallets/${wallet.id}/transfer`,
+        {
+          amount,
+          destinationAddress,
+          tokenType: selectedToken === "native" ? "sol" : "token",
+          tokenAddress: selectedToken === "native" ? null : selectedToken,
+        },
+      );
 
       if (!response.ok) {
         const error = await response.json();
@@ -90,7 +100,9 @@ function TransferDialog({ wallet, onClose }: TransferDialogProps) {
       });
 
       // Invalidate the community wallets query to refresh the data
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/community-wallets"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/admin/community-wallets"],
+      });
       onClose();
     } catch (error) {
       toast({
@@ -177,10 +189,15 @@ function TransferDialog({ wallet, onClose }: TransferDialogProps) {
 
 function AdminDashboard() {
   const { user } = useAuth();
-  const [selectedWallet, setSelectedWallet] = useState<CommunityWalletWithCoin | null>(null);
+  const [selectedWallet, setSelectedWallet] =
+    useState<CommunityWalletWithCoin | null>(null);
 
   // Fetch community wallets with coin information
-  const { data: wallets, isLoading, error } = useQuery<CommunityWalletWithCoin[]>({
+  const {
+    data: wallets,
+    isLoading,
+    error,
+  } = useQuery<CommunityWalletWithCoin[]>({
     queryKey: ["/api/admin/community-wallets"],
     enabled: !!user?.isAdmin,
   });
@@ -247,7 +264,8 @@ function AdminDashboard() {
                         alt={wallet.coinName}
                         className="w-8 h-8 rounded-full"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = "https://placehold.co/32x32";
+                          (e.target as HTMLImageElement).src =
+                            "https://placehold.co/32x32";
                         }}
                       />
                     )}
@@ -262,9 +280,12 @@ function AdminDashboard() {
                     {new Date(wallet.lastUpdated).toLocaleString()}
                   </TableCell>
                   <TableCell>
-                    <Dialog open={selectedWallet?.id === wallet.id} onOpenChange={(open) => {
-                      if (!open) setSelectedWallet(null);
-                    }}>
+                    <Dialog
+                      open={selectedWallet?.id === wallet.id}
+                      onOpenChange={(open) => {
+                        if (!open) setSelectedWallet(null);
+                      }}
+                    >
                       <DialogTrigger asChild>
                         <Button
                           variant="outline"
@@ -295,10 +316,5 @@ function AdminDashboard() {
 
 // Wrap the component with ProtectedRoute
 export function AdminPage() {
-  return (
-    <ProtectedRoute
-      path="/admin"
-      component={AdminDashboard}
-    />
-  );
+  return <ProtectedRoute path="/admin" component={AdminDashboard} />;
 }
