@@ -167,19 +167,19 @@ function TransferDialog({ wallet, onClose }: TransferDialogProps) {
           />
         </div>
         <div className="space-y-2">
-          <Label>Token Type</Label>
+          <Label>Token</Label>
           <Select
             value={selectedToken}
             onValueChange={setSelectedToken}
             disabled={isLoadingTokens}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select token" />
+              <SelectValue placeholder={isLoadingTokens ? "Loading tokens..." : "Select token"} />
             </SelectTrigger>
             <SelectContent>
               {tokens?.map((token) => (
                 <SelectItem key={token.mint} value={token.mint}>
-                  {token.symbol} ({token.balance} available)
+                  {token.symbol} ({token.balance.toFixed(4)} available)
                 </SelectItem>
               ))}
             </SelectContent>
