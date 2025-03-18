@@ -73,6 +73,13 @@ function TransferDialog({ wallet, onClose }: TransferDialogProps) {
 
   const selectedTokenInfo = tokens?.find((t) => t.mint === selectedToken);
 
+  // Set default token when tokens are loaded
+  useEffect(() => {
+    if (tokens && tokens.length > 0) {
+      setSelectedToken(tokens[0].mint);
+    }
+  }, [tokens]);
+
   const handleTransfer = async () => {
     try {
       setIsTransferring(true);
@@ -158,6 +165,25 @@ function TransferDialog({ wallet, onClose }: TransferDialogProps) {
             min="0"
             max={selectedTokenInfo?.balance.toString()}
           />
+        </div>
+        <div className="space-y-2">
+          <Label>Token Type</Label>
+          <Select
+            value={selectedToken}
+            onValueChange={setSelectedToken}
+            disabled={isLoadingTokens}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select token" />
+            </SelectTrigger>
+            <SelectContent>
+              {tokens?.map((token) => (
+                <SelectItem key={token.mint} value={token.mint}>
+                  {token.symbol} ({token.balance} available)
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-2">
           <Label htmlFor="destination">Destination Address</Label>
