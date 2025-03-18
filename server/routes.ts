@@ -380,19 +380,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add SPL tokens
       for (const { account } of tokenAccounts.value) {
         const parsedInfo = account.data.parsed.info;
-        const tokenAmount = parsedInfo.tokenAmount;
 
-        if (tokenAmount.uiAmount > 0) {
+        // Log token account info for debugging
+        console.log("Token account info:", JSON.stringify(parsedInfo, null, 2));
+
+        if (parsedInfo.tokenAmount && parsedInfo.tokenAmount.uiAmount > 0) {
           tokens.push({
             symbol: parsedInfo.symbol || 'Unknown',
             name: parsedInfo.name || 'Unknown Token',
             mint: parsedInfo.mint,
-            balance: tokenAmount.uiAmount,
-            decimals: tokenAmount.decimals,
+            balance: parsedInfo.tokenAmount.uiAmount,
+            decimals: parsedInfo.tokenAmount.decimals,
           });
         }
       }
 
+      console.log("Available tokens:", tokens);
       res.json(tokens);
     } catch (error) {
       console.error("Error fetching token accounts:", error);
