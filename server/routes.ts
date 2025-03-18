@@ -7,6 +7,34 @@ import { Connection, PublicKey, Keypair, Transaction, SystemProgram, LAMPORTS_PE
 import * as token from "@solana/spl-token";
 import { z } from "zod";
 
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+
+// import tokens
+app.get('/wallet/:address/tokens', async (req, res) => {
+  const walletAddress = req.params.address;
+  try {
+    const connection = new Connection('https://api.mainnet-beta.solana.com');
+    const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
+      new PublicKey(walletAddress),
+      { programId: TOKEN_PROGRAM_ID }
+    );
+
+    const tokens = tokenAccounts.value.map((acc) => ({
+      mint: acc.account.data.parsed.info.mint,
+      tokenAmount: acc.account.data.parsed.info.tokenAmount.uiAmount,
+      decimals: acc.account.data.parsed.info.tokenAmount.decimals,
+      symbol: acc.account.data.parsed.info.symbol || 'Unknown',
+    }));
+
+    res.json(tokens);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error fetching tokens' });
+  }
+});
+
+
+
 // Middleware to check authentication
 const requireAuth = (req: Request, res: Response, next: NextFunction) => {
   if (!req.isAuthenticated()) {
