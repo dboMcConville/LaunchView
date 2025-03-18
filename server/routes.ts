@@ -348,6 +348,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
+  // Add new endpoint to get token accounts for a wallet
+  app.get("/api/admin/community-wallets/:walletId/tokens", requireAdmin, async (req, res) => {
+    try {
+      const wallet = await storage.getCommunityWallet(parseInt(req.params.walletId));
+      if (!wallet) {
+        return res.status(404).json({ message: "Wallet not found" });
+      }
+
+      // Connect to Solana network
+      const connection = new Connection("https://api.mainnet-beta.solana.com", "confirmed");
+      const walletPublicKey = new PublicKey(wallet.walletAddress);
+
+      // Get all token accounts owned by the wallet
+      const tokenAccounts = await connection.getParsedTokenAccountsByOwner(walletPublicKey, {
+        programId: token.TOKEN_PROGRAM_ID,
+      });
+
+      // Get SOL balance
+      const solBalance = await connection.getBalance(walletPublicKey);
+
+      // Format token data
+      const tokens = [{
+        symbol: 'SOL',
+        name: 'Solana',
+        mint: 'native',
+        balance: solBalance / LAMPORTS_PER_SOL,
+        decimals: 9,
+      }];
+
+      // Add SPL tokens
+      for (const { account } of tokenAccounts.value) {
+        const parsedInfo = account.data.parsed.info;
+        const tokenAmount = parsedInfo.tokenAmount;
+
+        if (tokenAmount.uiAmount > 0) {
+          tokens.push({
+            symbol: parsedInfo.symbol || 'Unknown',
+            name: parsedInfo.name || 'Unknown Token',
+            mint: parsedInfo.mint,
+            balance: tokenAmount.uiAmount,
+            decimals: tokenAmount.decimals,
+          });
+        }
+      }
+
+      res.json(tokens);
+    } catch (error) {
+      console.error("Error fetching token accounts:", error);
+      res.status(500).json({ message: (error as Error).message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

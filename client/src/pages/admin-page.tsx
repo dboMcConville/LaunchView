@@ -28,6 +28,14 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 
 const LAMPORTS_PER_SOL = 1e9; // 1 SOL = 1,000,000,000 lamports
 
+interface TokenInfo {
+  symbol: string;
+  name: string;
+  mint: string;
+  balance: number;
+  decimals: number;
+}
+
 interface CommunityWalletWithCoin {
   id: number;
   coinId: number;
@@ -45,11 +53,19 @@ interface TransferDialogProps {
 }
 
 function TransferDialog({ wallet, onClose }: TransferDialogProps) {
-  const [tokenType, setTokenType] = useState<'sol' | 'token'>('sol');
+  const [selectedToken, setSelectedToken] = useState<string>('native');
   const [amount, setAmount] = useState("");
   const [destinationAddress, setDestinationAddress] = useState("");
   const [isTransferring, setIsTransferring] = useState(false);
   const { toast } = useToast();
+
+  // Fetch available tokens in the wallet
+  const { data: tokens, isLoading: isLoadingTokens } = useQuery<TokenInfo[]>({
+    queryKey: [`/api/admin/community-wallets/${wallet.id}/tokens`],
+    enabled: !!wallet.id,
+  });
+
+  const selectedTokenInfo = tokens?.find(t => t.mint === selectedToken);
 
   const handleTransfer = async () => {
     try {
@@ -57,8 +73,8 @@ function TransferDialog({ wallet, onClose }: TransferDialogProps) {
       const response = await apiRequest("POST", `/api/admin/community-wallets/${wallet.id}/transfer`, {
         amount,
         destinationAddress,
-        tokenType,
-        tokenAddress: tokenType === 'token' ? wallet.contractAddress : null
+        tokenType: selectedToken === 'native' ? 'sol' : 'token',
+        tokenAddress: selectedToken === 'native' ? null : selectedToken,
       });
 
       if (!response.ok) {
@@ -70,7 +86,7 @@ function TransferDialog({ wallet, onClose }: TransferDialogProps) {
 
       toast({
         title: "Transfer successful",
-        description: `Successfully transferred ${amount} ${tokenType === 'sol' ? 'SOL' : wallet.coinSymbol}`,
+        description: `Successfully transferred ${amount} ${selectedTokenInfo?.symbol}`,
       });
 
       // Invalidate the community wallets query to refresh the data
@@ -98,30 +114,37 @@ function TransferDialog({ wallet, onClose }: TransferDialogProps) {
           <Input disabled value={wallet.walletAddress} />
         </div>
         <div className="space-y-2">
-          <Label>Token Type</Label>
-          <Select
-            value={tokenType}
-            onValueChange={(value: 'sol' | 'token') => setTokenType(value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select token type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="sol">SOL (Native)</SelectItem>
-              <SelectItem value="token">{wallet.coinSymbol} Token</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label>Token</Label>
+          {isLoadingTokens ? (
+            <div className="flex items-center justify-center p-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
+          ) : (
+            <Select value={selectedToken} onValueChange={setSelectedToken}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select token" />
+              </SelectTrigger>
+              <SelectContent>
+                {tokens?.map((token) => (
+                  <SelectItem key={token.mint} value={token.mint}>
+                    {token.symbol} ({token.balance} available)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="amount">Amount ({tokenType === 'sol' ? 'SOL' : wallet.coinSymbol})</Label>
+          <Label htmlFor="amount">Amount ({selectedTokenInfo?.symbol})</Label>
           <Input
             id="amount"
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            placeholder={`Enter amount in ${tokenType === 'sol' ? 'SOL' : wallet.coinSymbol}`}
+            placeholder={`Enter amount in ${selectedTokenInfo?.symbol}`}
             step="0.000000001"
             min="0"
+            max={selectedTokenInfo?.balance.toString()}
           />
         </div>
         <div className="space-y-2">
@@ -136,7 +159,7 @@ function TransferDialog({ wallet, onClose }: TransferDialogProps) {
         <Button
           onClick={handleTransfer}
           className="w-full"
-          disabled={isTransferring}
+          disabled={isTransferring || !selectedTokenInfo}
         >
           {isTransferring ? (
             <>
