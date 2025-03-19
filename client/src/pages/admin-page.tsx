@@ -83,6 +83,13 @@ function TransferDialog({ wallet, onClose }: TransferDialogProps) {
   const handleTransfer = async () => {
     try {
       setIsTransferring(true);
+      console.log('Initiating transfer:', {
+        walletId: wallet.id,
+        amount,
+        destinationAddress,
+        tokenType: selectedToken === "native" ? "sol" : "token",
+        tokenAddress: selectedToken === "native" ? null : selectedToken
+      });
       const response = await apiRequest(
         "POST",
         `/api/admin/community-wallets/${wallet.id}/transfer`,

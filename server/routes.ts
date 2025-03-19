@@ -174,6 +174,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     requireAdmin,
     async (req, res) => {
       try {
+        console.log('Transfer request received:', {
+          walletId: req.params.walletId,
+          body: req.body
+        });
         const { amount, destinationAddress, tokenType, tokenAddress } =
           transferSchema.parse(req.body);
 
@@ -184,9 +188,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
 
         // Get wallet details
-        const wallet = await storage.getCommunityWallet(
-          parseInt(req.params.walletId),
-        );
+        const walletId = parseInt(req.params.walletId);
+        console.log('Fetching wallet with ID:', walletId);
+        const wallet = await storage.getCommunityWallet(walletId);
+        console.log('Wallet fetch result:', wallet);
         if (!wallet) {
           return res.status(404).json({ message: "Wallet not found" });
         }
