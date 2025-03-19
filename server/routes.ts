@@ -221,9 +221,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
             toPubkey,
           );
 
+          // Check if source token account exists
+          const fromTokenAccountInfo = await connection.getAccountInfo(fromTokenAccount);
+          if (!fromTokenAccountInfo) {
+            // Create associated token account for source if it doesn't exist
+            transaction.add(
+              token.createAssociatedTokenAccountInstruction(
+                fromPubkey, // payer
+                fromTokenAccount,
+                fromPubkey,
+                tokenPublicKey,
+              ),
+            );
+          }
+
           // Check if destination token account exists
-          const toTokenAccountInfo =
-            await connection.getAccountInfo(toTokenAccount);
+          const toTokenAccountInfo = await connection.getAccountInfo(toTokenAccount);
 
           if (!toTokenAccountInfo) {
             // Create associated token account for destination if it doesn't exist
