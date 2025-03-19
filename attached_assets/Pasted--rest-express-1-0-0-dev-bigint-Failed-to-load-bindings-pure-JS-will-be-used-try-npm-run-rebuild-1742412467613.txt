@@ -1,0 +1,62 @@
+> rest-express@1.0.0 dev
+bigint: Failed to load bindings, pure JS will be used (try npm run rebuild?)
+7:26:25 PM [express] serving on port 5000
+7:26:41 PM [express] GET /api/user 304 in 200ms :: {"id":4,"username":"John","password":"4786d926283…
+7:26:41 PM [express] GET /api/admin/community-wallets 200 in 332ms :: [{"id":1,"coinId":4,"walletAdd…
+7:27:09 PM [express] GET /api/user 304 in 196ms :: {"id":4,"username":"John","password":"4786d926283…
+7:27:10 PM [express] GET /api/admin/community-wallets 304 in 329ms :: [{"id":1,"coinId":4,"walletAdd…
+Available tokens: [
+  {
+    symbol: 'SOL',
+    name: 'Solana',
+    mint: 'native',
+    balance: 0,
+    decimals: 9
+  },
+  {
+    symbol: 'Unknown',
+    name: 'Unknown Token',
+    mint: '7kCbdNkQGwn4L8aFe6WBv9ra5LxGeP3fA4VyBcpjEJ78',
+    balance: 64.5156,
+    decimals: 9
+  }
+]
+7:27:23 PM [express] GET /api/admin/community-wallets/3/tokens 200 in 772ms :: [{"symbol":"SOL","nam…
+Transfer request received: {
+  walletId: '3',
+  body: {
+    amount: '43',
+    destinationAddress: 'FsnC87j2mcKYpfZBE4atov9nTD7a1AkTB2epEAgxz8dM',
+    tokenType: 'token',
+    tokenAddress: '7kCbdNkQGwn4L8aFe6WBv9ra5LxGeP3fA4VyBcpjEJ78'
+  }
+}
+Available wallets: [
+  {
+    id: 1,
+    coinId: 4,
+    walletAddress: '36CyssuJD96Wd1ceCFqQn9p4d9Gnry8f2mS9cCTLjXRc',
+    privateKey: '',
+    balance: '0',
+    lastUpdated: 2025-03-17T21:21:36.130Z
+  },
+  {
+    id: 2,
+    coinId: 5,
+    walletAddress: 'GmtVEjKSVYTLt9bsHqdGjVcv4MdKbvK78jBVkoqwL1H3',
+    privateKey: '',
+    balance: '0',
+    lastUpdated: 2025-03-17T21:45:11.019Z
+  },
+  {
+    id: 3,
+    coinId: 6,
+    walletAddress: '2J3qwRX6mNYVCHjV21RThwbDeuXqToyzBBDRZRKKfagv',
+    privateKey: 'a0ff549483dd87f6a795815dee539bf9ea78979a87ef52c021a5abbe983fa1981339c6b0c9637c925f2ac3ca5bd451772028caaf4944f86d95f8b64e259c8aff',
+    balance: '0',
+    lastUpdated: 2025-03-17T21:58:12.779Z
+  }
+]
+Wallet not found for ID: 3
+7:27:31 PM [express] POST /api/admin/community-wallets/3/transfer 404 in 332ms :: {"message":"Wallet…
+^A

@@ -1,0 +1,22 @@
+Initiating transfer: {walletId: 3, amount: '55', destinationAddress: 'FsnC87j2mcKYpfZBE4atov9nTD7a1AkTB2epEAgxz8dM', tokenType: 'token', tokenAddress: '7kCbdNkQGwn4L8aFe6WBv9ra5LxGeP3fA4VyBcpjEJ78'}amount: "55"destinationAddress: "FsnC87j2mcKYpfZBE4atov9nTD7a1AkTB2epEAgxz8dM"tokenAddress: "7kCbdNkQGwn4L8aFe6WBv9ra5LxGeP3fA4VyBcpjEJ78"tokenType: "token"walletId: 3[[Prototype]]: Objectconstructor: ƒ Object()hasOwnProperty: ƒ hasOwnProperty()isPrototypeOf: ƒ isPrototypeOf()propertyIsEnumerable: ƒ propertyIsEnumerable()toLocaleString: ƒ toLocaleString()toString: ƒ toString()valueOf: ƒ valueOf()__defineGetter__: ƒ __defineGetter__()__defineSetter__: ƒ __defineSetter__()__lookupGetter__: ƒ __lookupGetter__()__lookupSetter__: ƒ __lookupSetter__()__proto__: (...)get __proto__: ƒ __proto__()set __proto__: ƒ __proto__()
+queryClient.ts:15 
+            
+            
+           POST https://89973e25-1a80-4217-8cdc-9cd5cae05f07-00-2lvgtiz37zft3.spock.replit.dev/api/admin/community-wallets/3/transfer 400 (Bad Request)
+apiRequest @ queryClient.ts:15
+handleTransfer @ admin-page.tsx:93
+callCallback2 @ chunk-276SZO74.js?v=996a77db:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=996a77db:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=996a77db:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=996a77db:3736
+executeDispatch @ chunk-276SZO74.js?v=996a77db:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=996a77db:7034
+processDispatchQueue @ chunk-276SZO74.js?v=996a77db:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=996a77db:7051
+(anonymous) @ chunk-276SZO74.js?v=996a77db:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=996a77db:18913
+batchedUpdates @ chunk-276SZO74.js?v=996a77db:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=996a77db:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=996a77db:5478
+dispatchEvent @ chunk-276SZO74.js?v=996a77db:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=996a77db:5449
