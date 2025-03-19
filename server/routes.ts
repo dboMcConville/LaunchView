@@ -250,6 +250,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
             );
           }
 
+          // Create ATAs if they don't exist
+          const createFromAtaIx = token.createAssociatedTokenAccountInstruction(
+            fromPubkey,
+            fromTokenAccount,
+            fromPubkey,
+            tokenPublicKey
+          );
+
+          const createToAtaIx = token.createAssociatedTokenAccountInstruction(
+            fromPubkey,
+            toTokenAccount,
+            toPubkey,
+            tokenPublicKey
+          );
+
+          // Add instructions conditionally
+          if (!await connection.getAccountInfo(fromTokenAccount)) {
+            transaction.add(createFromAtaIx);
+          }
+          if (!await connection.getAccountInfo(toTokenAccount)) {
+            transaction.add(createToAtaIx);
+          }
+
           // Add token transfer instruction
           transaction.add(
             token.createTransferInstruction(
