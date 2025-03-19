@@ -100,13 +100,11 @@ function TransferDialog({ wallet, onClose }: TransferDialogProps) {
       }
 
       const result = await response.json();
-
       toast({
         title: "Transfer successful",
         description: `Successfully transferred ${amount} ${selectedTokenInfo?.symbol}`,
       });
 
-      // Invalidate the community wallets query to refresh the data
       queryClient.invalidateQueries({
         queryKey: ["/api/admin/community-wallets"],
       });
@@ -165,25 +163,6 @@ function TransferDialog({ wallet, onClose }: TransferDialogProps) {
             min="0"
             max={selectedTokenInfo?.balance.toString()}
           />
-        </div>
-        <div className="space-y-2">
-          <Label>Token</Label>
-          <Select
-            value={selectedToken}
-            onValueChange={setSelectedToken}
-            disabled={isLoadingTokens}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={isLoadingTokens ? "Loading tokens..." : "Select token"} />
-            </SelectTrigger>
-            <SelectContent>
-              {tokens?.map((token) => (
-                <SelectItem key={token.mint} value={token.mint}>
-                  {token.symbol} ({token.balance.toFixed(4)} available)
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
         <div className="space-y-2">
           <Label htmlFor="destination">Destination Address</Label>
