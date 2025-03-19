@@ -375,10 +375,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async (req, res) => {
       try {
         // Get wallet by ID directly from database
-        const wallets = await storage.getAllCommunityWallets();
-        const wallet = wallets.find(
-          (w) => w.id === parseInt(req.params.walletId),
-        );
+        const walletId = parseInt(req.params.walletId);
+        const wallet = await storage.getCommunityWallet(walletId);
         if (!wallet) {
           return res.status(404).json({ message: "Wallet not found" });
         }
