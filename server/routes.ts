@@ -443,20 +443,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         for (const { account } of tokenAccounts.value) {
           const parsedInfo = account.data.parsed.info;
 
-          // Log token account info for debugging
-          console.log(
-            "Token account info:",
-            JSON.stringify(parsedInfo, null, 2),
-          );
-
           if (parsedInfo.tokenAmount && parsedInfo.tokenAmount.uiAmount > 0) {
-            tokens.push({
-              symbol: parsedInfo.symbol || "Unknown",
-              name: parsedInfo.name || "Unknown Token",
-              mint: parsedInfo.mint,
-              balance: parsedInfo.tokenAmount.uiAmount,
-              decimals: parsedInfo.tokenAmount.decimals,
-            });
+            try {
+              // Fetch token metadata from Jupiter
+              const jupiterResponse = await fetch(
+                `https://api.jup.ag/api/tokens/v1/token/${parsedInfo.mint}`
+              );
+              const tokenMetadata = await jupiterResponse.json();
+
+              tokens.push({
+                symbol: tokenMetadata.symbol || "Unknown",
+                name: tokenMetadata.name || "Unknown Token",
+                mint: parsedInfo.mint,
+                balance: parsedInfo.tokenAmount.uiAmount,
+                decimals: parsedInfo.tokenAmount.decimals,
+              });
+            } catch (error) {
+              console.error(`Error fetching metadata for token ${parsedInfo.mint}:`, error);
+              // Fallback to basic info if Jupiter API fails
+              tokens.push({
+                symbol: parsedInfo.symbol || "Unknown",
+                name: parsedInfo.name || "Unknown Token",
+                mint: parsedInfo.mint,
+                balance: parsedInfo.tokenAmount.uiAmount,
+                decimals: parsedInfo.tokenAmount.decimals,
+              });
+            }
           }
         }
 
