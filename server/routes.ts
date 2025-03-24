@@ -220,7 +220,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }),
           );
         } else if (tokenType === "token" && tokenAddress) {
-          // Additional token transfer logic here...
+          // Get the token accounts
+          const fromTokenAccount = await token.getAssociatedTokenAddress(
+            new PublicKey(tokenAddress),
+            fromPubkey
+          );
+          
+          const toTokenAccount = await token.getAssociatedTokenAddress(
+            new PublicKey(tokenAddress),
+            toPubkey
+          );
+
+          // Create associated token account if it doesn't exist
+          try {
+            await token.getAccount(connection, toTokenAccount);
+          } catch {
+            transaction.add(
+              token.createAssociatedTokenAccountInstruction(
+                fromPubkey,
+                toTokenAccount,
+                toPubkey,
+                new PublicKey(tokenAddress)
+              )
+            );
+          }
+
+          // Add token transfer instruction
+          transaction.add(
+            token.createTransferInstruction(
+              fromTokenAccount,
+              toTokenAccount,
+              fromPubkey,
+              Math.floor(parsedAmount * Math.pow(10, 9)) // Assuming 9 decimals
+            )
+          );
         }
 
         transaction.recentBlockhash = (
@@ -241,7 +274,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json({ success: true, signature });
       } catch (error) {
         console.error("Transfer error:", error);
-        // Existing error handling logic...
+        res.status(500).json({ 
+          message: error instanceof Error ? error.message : "Transfer failed",
+          details: error instanceof Error ? error.stack : undefined
+        });
       }
     },
   );
