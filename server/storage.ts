@@ -23,6 +23,7 @@ export interface IStorage {
   // Community wallet operations
   createCommunityWallet(wallet: InsertCommunityWallet & { privateKey: string }): Promise<CommunityWallet>;
   getCommunityWallet(coinId: number): Promise<CommunityWallet | undefined>;
+  getCommunityWalletById(id: number): Promise<CommunityWallet | undefined>;
   updateCommunityWalletBalance(coinId: number, balance: string): Promise<CommunityWallet>;
   getAllCommunityWallets(): Promise<CommunityWallet[]>;
 
@@ -112,6 +113,14 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(communityWallets)
       .where(eq(communityWallets.coinId, coinId));
+    return wallet;
+  }
+
+  async getCommunityWalletById(id: number): Promise<CommunityWallet | undefined> {
+    const [wallet] = await db
+      .select()
+      .from(communityWallets)
+      .where(eq(communityWallets.id, id));
     return wallet;
   }
 

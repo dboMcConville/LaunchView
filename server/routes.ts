@@ -196,7 +196,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Convert walletId to integer
         const walletId = parseInt(req.params.walletId);
-        const wallet = await storage.getCommunityWallet(walletId); // Use the integer walletId
+        const wallet = await storage.getCommunityWalletById(walletId); // Use the new method to get wallet by ID
         if (!wallet) {
           console.error("Wallet not found for ID:", walletId);
           return res.status(404).json({ message: "Wallet not found" });
