@@ -262,12 +262,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           // Create associated token account for receiver if it doesn't exist
           console.log("Checking receiver's token account...");
+          let receiverAccountExists = false;
           try {
             await token.getAccount(connection, toTokenAccount);
             console.log("Receiver's token account exists");
+            receiverAccountExists = true;
           } catch {
             console.log("Creating receiver's token account...");
-            transaction.add(
+            // Create a new transaction just for creating the account
+            const createAccountTx = new Transaction();
+            createAccountTx.add(
               token.createAssociatedTokenAccountInstruction(
                 fromPubkey,
                 toTokenAccount,
@@ -275,7 +279,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 new PublicKey(tokenAddress)
               )
             );
-            console.log("Added create account instruction to transaction");
+            
+            // Get recent blockhash for the create account transaction
+            createAccountTx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+            
+            // Sign and send the create account transaction
+            const signer = Keypair.fromSecretKey(Buffer.from(wallet.privateKey, "hex"));
+            createAccountTx.sign(signer);
+            
+            console.log("Sending create account transaction...");
+            const createAccountSignature = await connection.sendRawTransaction(createAccountTx.serialize());
+            console.log("Create account transaction sent, signature:", createAccountSignature);
+            
+            // Wait for confirmation
+            await connection.confirmTransaction(createAccountSignature);
+            console.log("Create account transaction confirmed");
+            
+            // Wait a moment for the account to be fully created
+            await new Promise(resolve => setTimeout(resolve, 2000));
           }
 
           // Get token decimals from mint
@@ -283,6 +304,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const mintInfo = await token.getMint(connection, new PublicKey(tokenAddress));
           const decimals = mintInfo.decimals;
           console.log("Token decimals:", decimals);
+
+          // Create a new transaction for the transfer
+          transaction = new Transaction();
 
           // Add token transfer instruction
           console.log("Adding transfer instruction...");
