@@ -231,10 +231,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
             toPubkey
           );
 
-          // Create associated token account if it doesn't exist
+          // Check if sender's token account exists
+          let fromTokenAccountInfo;
+          try {
+            fromTokenAccountInfo = await token.getAccount(connection, fromTokenAccount);
+          } catch {
+            console.error("Sender's token account not found");
+            return res.status(400).json({ 
+              message: "Sender's token account not found. Please ensure the wallet has the token account initialized." 
+            });
+          }
+
+          // Create associated token account for receiver if it doesn't exist
           try {
             await token.getAccount(connection, toTokenAccount);
           } catch {
+            console.log("Creating receiver's token account");
             transaction.add(
               token.createAssociatedTokenAccountInstruction(
                 fromPubkey,
@@ -245,13 +257,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
             );
           }
 
+          // Get token decimals from mint
+          const mintInfo = await token.getMint(connection, new PublicKey(tokenAddress));
+          const decimals = mintInfo.decimals;
+
           // Add token transfer instruction
           transaction.add(
             token.createTransferInstruction(
               fromTokenAccount,
               toTokenAccount,
               fromPubkey,
-              Math.floor(parsedAmount * Math.pow(10, 9)) // Assuming 9 decimals
+              Math.floor(parsedAmount * Math.pow(10, decimals))
             )
           );
         }
