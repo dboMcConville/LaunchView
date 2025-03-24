@@ -196,11 +196,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Convert walletId to integer
         const walletId = parseInt(req.params.walletId);
+        console.log("Looking up wallet with ID:", walletId);
         const wallet = await storage.getCommunityWalletById(walletId); // Use the new method to get wallet by ID
         if (!wallet) {
           console.error("Wallet not found for ID:", walletId);
           return res.status(404).json({ message: "Wallet not found" });
         }
+        console.log("Found wallet:", {
+          id: wallet.id,
+          address: wallet.walletAddress,
+          coinId: wallet.coinId
+        });
 
         // Connection and transaction logic remains the same
         const connection = new Connection(
