@@ -220,33 +220,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }),
           );
         } else if (tokenType === "token" && tokenAddress) {
+          console.log("Starting token transfer process...");
+          console.log("Token address:", tokenAddress);
+          console.log("Amount:", parsedAmount);
+          console.log("From wallet:", fromPubkey.toString());
+          console.log("To wallet:", toPubkey.toString());
+
           // Get the token accounts
+          console.log("Getting associated token addresses...");
           const fromTokenAccount = await token.getAssociatedTokenAddress(
             new PublicKey(tokenAddress),
             fromPubkey
           );
+          console.log("From token account:", fromTokenAccount.toString());
           
           const toTokenAccount = await token.getAssociatedTokenAddress(
             new PublicKey(tokenAddress),
             toPubkey
           );
+          console.log("To token account:", toTokenAccount.toString());
 
           // Check if sender's token account exists
+          console.log("Checking sender's token account...");
           let fromTokenAccountInfo;
           try {
             fromTokenAccountInfo = await token.getAccount(connection, fromTokenAccount);
-          } catch {
-            console.error("Sender's token account not found");
+            console.log("Sender's token account found:", fromTokenAccountInfo.address.toString());
+            console.log("Sender's token balance:", fromTokenAccountInfo.amount.toString());
+          } catch (error) {
+            console.error("Error checking sender's token account:", error);
             return res.status(400).json({ 
               message: "Sender's token account not found. Please ensure the wallet has the token account initialized." 
             });
           }
 
           // Create associated token account for receiver if it doesn't exist
+          console.log("Checking receiver's token account...");
           try {
             await token.getAccount(connection, toTokenAccount);
+            console.log("Receiver's token account exists");
           } catch {
-            console.log("Creating receiver's token account");
+            console.log("Creating receiver's token account...");
             transaction.add(
               token.createAssociatedTokenAccountInstruction(
                 fromPubkey,
@@ -255,41 +269,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 new PublicKey(tokenAddress)
               )
             );
+            console.log("Added create account instruction to transaction");
           }
 
           // Get token decimals from mint
+          console.log("Getting token mint info...");
           const mintInfo = await token.getMint(connection, new PublicKey(tokenAddress));
           const decimals = mintInfo.decimals;
+          console.log("Token decimals:", decimals);
 
           // Add token transfer instruction
+          console.log("Adding transfer instruction...");
+          const transferAmount = Math.floor(parsedAmount * Math.pow(10, decimals));
+          console.log("Transfer amount in base units:", transferAmount);
+          
           transaction.add(
             token.createTransferInstruction(
               fromTokenAccount,
               toTokenAccount,
               fromPubkey,
-              Math.floor(parsedAmount * Math.pow(10, decimals))
+              transferAmount
             )
           );
+          console.log("Transfer instruction added to transaction");
         }
 
+        console.log("Getting recent blockhash...");
         transaction.recentBlockhash = (
           await connection.getLatestBlockhash()
         ).blockhash;
+        console.log("Blockhash:", transaction.recentBlockhash);
 
+        console.log("Signing transaction...");
         const signer = Keypair.fromSecretKey(
           Buffer.from(wallet.privateKey, "hex"),
         );
         transaction.sign(signer);
+        console.log("Transaction signed");
 
+        console.log("Sending transaction...");
         const signature = await connection.sendRawTransaction(
           transaction.serialize(),
         );
+        console.log("Transaction sent, signature:", signature);
+
+        console.log("Confirming transaction...");
         await connection.confirmTransaction(signature);
+        console.log("Transaction confirmed");
 
         console.log("Transfer successful, signature:", signature);
         res.json({ success: true, signature });
       } catch (error) {
         console.error("Transfer error:", error);
+        console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
         res.status(500).json({ 
           message: error instanceof Error ? error.message : "Transfer failed",
           details: error instanceof Error ? error.stack : undefined
