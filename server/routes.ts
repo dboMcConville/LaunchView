@@ -277,12 +277,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               token.ACCOUNT_SIZE
             );
             
-            // Add SOL transfer for account creation
+            // Add SOL transfer for account creation (rent exemption + transaction fee)
+            const transactionFee = 5000; // Estimated transaction fee in lamports
             createAccountTx.add(
               SystemProgram.transfer({
                 fromPubkey,
                 toPubkey: toTokenAccount,
-                lamports: minBalance
+                lamports: minBalance + transactionFee
               })
             );
             
