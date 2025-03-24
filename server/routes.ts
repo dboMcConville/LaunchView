@@ -271,6 +271,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log("Creating receiver's token account...");
             // Create a new transaction just for creating the account
             const createAccountTx = new Transaction();
+            
+            // Get the minimum balance for the token account
+            const minBalance = await connection.getMinimumBalanceForRentExemption(
+              token.ACCOUNT_SIZE
+            );
+            
+            // Add SOL transfer for account creation
+            createAccountTx.add(
+              SystemProgram.transfer({
+                fromPubkey,
+                toPubkey: toTokenAccount,
+                lamports: minBalance
+              })
+            );
+            
+            // Add the create account instruction
             createAccountTx.add(
               token.createAssociatedTokenAccountInstruction(
                 fromPubkey,
