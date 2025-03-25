@@ -180,6 +180,24 @@ function TransferDialog({ wallet, onClose }: TransferDialogProps) {
             placeholder="Enter destination wallet address"
           />
         </div>
+        
+        {/* Add transaction fee info */}
+        <div className="space-y-2 text-sm text-muted-foreground">
+          <div className="flex justify-between">
+            <span>Transaction Fee:</span>
+            <span>~0.000005 SOL</span>
+          </div>
+          {selectedToken !== "native" && !tokens?.find(t => t.mint === selectedToken)?.balance && (
+            <div className="flex justify-between">
+              <span>Account Creation Fee:</span>
+              <span>~0.00203928 SOL</span>
+            </div>
+          )}
+          <p className="text-xs italic">
+            Note: Actual fees may vary slightly based on network conditions
+          </p>
+        </div>
+
         <Button
           onClick={handleTransfer}
           className="w-full"
