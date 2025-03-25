@@ -11,19 +11,17 @@ export default function CoinPage() {
   return (
     <div className="flex min-h-screen">
       <SidebarNav />
-      <main className="flex-1 p-8">
-        <div className="max-w-3xl mx-auto">
-          {address ? (
-            <TokenMetadata address={address} />
-          ) : (
-            <div className="text-center">
-              <h1 className="text-2xl font-bold mb-4">Invalid Address</h1>
-              <p className="text-muted-foreground">
-                No token address was provided.
-              </p>
-            </div>
-          )}
-        </div>
+      <main className="flex-1">
+        {address ? (
+          <TokenMetadata address={address} />
+        ) : (
+          <div className="text-center p-8">
+            <h1 className="text-2xl font-bold mb-4">Invalid Address</h1>
+            <p className="text-muted-foreground">
+              No token address was provided.
+            </p>
+          </div>
+        )}
       </main>
     </div>
   );
