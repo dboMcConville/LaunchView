@@ -139,7 +139,8 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
     );
   }
 
-  const price = priceData?.data?.[address]?.price || 0;
+  const price = priceData?.data?.[address]?.price;
+  const formattedPrice = typeof price === 'number' ? price.toFixed(6) : '0.00';
 
   return (
     <div className="flex flex-col">
@@ -162,7 +163,7 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
             </h1>
             <div className="flex items-center gap-4 mt-2">
               <span className="text-2xl font-semibold">
-                ${price.toFixed(6)}
+                ${formattedPrice}
               </span>
               <Button variant="outline" size="sm">
                 <ExternalLink className="h-4 w-4 mr-2" />
