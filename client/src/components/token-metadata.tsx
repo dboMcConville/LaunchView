@@ -40,6 +40,9 @@ interface PriceData {
   data: {
     [key: string]: {
       price: number;
+      extraInfo?: {
+        priceUsd: number;
+      };
     };
   };
 }
@@ -87,7 +90,8 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
   }, [tokenSupply, priceData, address]);
 
   // Format price with proper decimal places
-  const price = (priceData as PriceData | undefined)?.data?.[address]?.price;
+  const price = (priceData as PriceData | undefined)?.data?.[address]?.extraInfo?.priceUsd || 
+                (priceData as PriceData | undefined)?.data?.[address]?.price;
   const formattedPrice = React.useMemo(() => {
     if (typeof price !== 'number') return '0.00';
     if (price < 0.000001) {
