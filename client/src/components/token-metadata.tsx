@@ -110,11 +110,18 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
         const zeros = match[0].length - 2;
         // Get the significant digits after the zeros
         const significantDigits = priceStr.slice(match[0].length);
-        const formatted = `0.0${zeros}${significantDigits}`;
+        // Convert number to subscript using Unicode subscript numbers
+        const subscriptNumber = zeros.toString().split('').map(digit => {
+          const subscriptDigits = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
+          return subscriptDigits[parseInt(digit)];
+        }).join('');
+        // Create the formatted string with subscript notation
+        const formatted = `0.0${subscriptNumber}${significantDigits}`;
         console.log('Formatted small price:', formatted);
         return formatted;
       }
     }
+    // For normal numbers, show 6 decimal places
     const formatted = numericPrice.toFixed(6);
     console.log('Formatted normal price:', formatted);
     return formatted;
