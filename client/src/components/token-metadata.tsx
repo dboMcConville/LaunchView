@@ -73,7 +73,9 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
         `https://api.jup.ag/price/v2?ids=${address}&showExtraInfo=true`,
       );
       if (!response.ok) throw new Error("Failed to fetch price data");
-      return response.json();
+      const data = await response.json();
+      console.log('Jupiter API response:', data);
+      return data;
     },
     enabled: !!address,
   });
@@ -93,12 +95,20 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
   const price = (priceData as PriceData | undefined)?.data?.[address]?.extraInfo?.priceUsd || 
                 (priceData as PriceData | undefined)?.data?.[address]?.price;
   const formattedPrice = React.useMemo(() => {
-    if (typeof price !== 'number') return '0.00';
+    console.log('Raw price:', price);
+    if (typeof price !== 'number') {
+      console.log('Price is not a number');
+      return '0.00';
+    }
     if (price < 0.000001) {
       const zeros = Math.floor(Math.log10(price));
-      return `0.0${zeros}${price.toFixed(6)}`;
+      const formatted = `0.0${zeros}${price.toFixed(6)}`;
+      console.log('Formatted small price:', formatted);
+      return formatted;
     }
-    return price.toFixed(6);
+    const formatted = price.toFixed(6);
+    console.log('Formatted normal price:', formatted);
+    return formatted;
   }, [price]);
 
   useEffect(() => {
