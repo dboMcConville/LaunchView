@@ -7,7 +7,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Loader2, AlertCircle, ExternalLink, TrendingUp, Users, Wallet } from "lucide-react";
+import { Loader2, AlertCircle, ExternalLink, TrendingUp, Users, Wallet, Copy, Check } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { intervalToDuration, formatDuration } from "date-fns";
 import {
@@ -48,6 +48,13 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
   const [metadata, setMetadata] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const copyToClipboard = async () => {
+    await navigator.clipboard.writeText(address);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   // Use TanStack Query for token supply
   const { data: tokenSupply } = useQuery<TokenSupplyResponse>({
@@ -140,7 +147,14 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
   }
 
   const price = priceData?.data?.[address]?.price;
-  const formattedPrice = typeof price === 'number' ? price.toFixed(6) : '0.00';
+  const formattedPrice = React.useMemo(() => {
+    if (typeof price !== 'number') return '0.00';
+    if (price < 0.000001) {
+      const zeros = Math.floor(Math.log10(price));
+      return `0.0${zeros}${price.toFixed(6)}`;
+    }
+    return price.toFixed(6);
+  }, [price]);
 
   return (
     <div className="flex flex-col">
@@ -161,13 +175,32 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
                 ({metadata?.symbol})
               </span>
             </h1>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground font-mono mt-1">
+              {address}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={copyToClipboard}
+              >
+                {copied ? (
+                  <Check className="h-3 w-3 text-green-500" />
+                ) : (
+                  <Copy className="h-3 w-3" />
+                )}
+              </Button>
+            </div>
             <div className="flex items-center gap-4 mt-2">
               <span className="text-2xl font-semibold">
-                ${formattedPrice}
+                {formattedPrice}
               </span>
-              <Button variant="outline" size="sm">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => window.open(`https://dexscreener.com/solana/${address}`, '_blank')}
+              >
                 <ExternalLink className="h-4 w-4 mr-2" />
-                View on Explorer
+                View on DexScreener
               </Button>
             </div>
           </div>
@@ -232,11 +265,6 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
             <Card>
               <CardContent className="pt-6">
                 <div className="grid gap-4">
-                  <div>
-                    <h3 className="font-medium mb-1">Contract Address</h3>
-                    <p className="text-sm font-mono break-all">{address}</p>
-                  </div>
-
                   <div>
                     <h3 className="font-medium mb-1">Created</h3>
                     <p className="text-sm">
