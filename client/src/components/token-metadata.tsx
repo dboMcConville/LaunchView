@@ -193,7 +193,7 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
             </div>
             <div className="flex items-center gap-4 mt-2">
               <span className="text-2xl font-semibold">
-                {formattedPrice}
+                ${formattedPrice}
               </span>
               <Button 
                 variant="outline" 
