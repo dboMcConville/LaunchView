@@ -102,12 +102,13 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
       return '0.00';
     }
     if (numericPrice < 0.000001) {
-      // Count the number of zeros after the decimal point
-      const priceStr = numericPrice.toFixed(6);
+      // Convert to string with full precision
+      const priceStr = numericPrice.toString();
       const match = priceStr.match(/^0\.0+/);
       if (match) {
-        // Subtract 2 to account for "0." prefix and 1 to exclude the first zero
-        const zeros = match[0].length - 3;
+        // Count the number of zeros after the decimal point (excluding the first zero)
+        const zeros = match[0].length - 2;
+        // Get the significant digits after the zeros
         const significantDigits = priceStr.slice(match[0].length);
         const formatted = `0.0${zeros}${significantDigits}`;
         console.log('Formatted small price:', formatted);
