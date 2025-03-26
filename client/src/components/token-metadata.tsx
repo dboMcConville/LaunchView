@@ -27,8 +27,13 @@ interface TokenMetadataProps {
   address: string;
 }
 
-interface SupplyData {
-  supply: number;
+interface TokenSupplyResponse {
+  success: boolean;
+  data?: {
+    amount: string;
+    decimals: number;
+  };
+  error?: string;
 }
 
 interface PriceData {
@@ -52,22 +57,34 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
   };
 
   // Use TanStack Query for token supply
-  const { data: supplyData } = useQuery<SupplyData>({
-    queryKey: [`/api/coins/${address}/supply`],
+  const { data: tokenSupply } = useQuery<TokenSupplyResponse>({
+    queryKey: [`/api/token-supply/${address}`],
+    enabled: !!address,
   });
 
   // Use TanStack Query for price data
   const { data: priceData } = useQuery<PriceData>({
-    queryKey: [`/api/coins/${address}/price`],
+    queryKey: [`https://api.jup.ag/price/v2?ids=${address}&showExtraInfo=true`],
+    queryFn: async () => {
+      const response = await fetch(
+        `https://api.jup.ag/price/v2?ids=${address}&showExtraInfo=true`,
+      );
+      if (!response.ok) throw new Error("Failed to fetch price data");
+      return response.json();
+    },
+    enabled: !!address,
   });
 
   // Calculate market cap
   const marketCap = React.useMemo(() => {
-    const supply = supplyData as SupplyData | undefined;
-    const price = priceData as PriceData | undefined;
-    if (!supply?.supply || !price?.data?.[address]?.price) return null;
-    return supply.supply * price.data[address].price;
-  }, [supplyData, priceData, address]);
+    if (!tokenSupply?.data || !priceData?.data?.[address]?.price) return null;
+
+    const price = priceData.data[address].price;
+    const supply = parseFloat(tokenSupply.data.amount);
+    const decimals = tokenSupply.data.decimals;
+
+    return (supply / 10 ** decimals) * price;
+  }, [tokenSupply, priceData, address]);
 
   // Format price with proper decimal places
   const price = (priceData as PriceData | undefined)?.data?.[address]?.price;
