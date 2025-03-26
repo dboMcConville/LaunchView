@@ -102,7 +102,10 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
       return '0.00';
     }
     if (numericPrice < 0.000001) {
-      const zeros = Math.floor(Math.log10(numericPrice));
+      // Count the number of zeros after the decimal point
+      const priceStr = numericPrice.toFixed(6);
+      const match = priceStr.match(/^0\.0+/);
+      const zeros = match ? match[0].length - 2 : 0;
       const formatted = `0.0${zeros}${numericPrice.toFixed(6)}`;
       console.log('Formatted small price:', formatted);
       return formatted;
