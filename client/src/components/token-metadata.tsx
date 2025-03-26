@@ -96,17 +96,18 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
                 (priceData as PriceData | undefined)?.data?.[address]?.price;
   const formattedPrice = React.useMemo(() => {
     console.log('Raw price:', price);
-    if (typeof price !== 'number') {
-      console.log('Price is not a number');
+    const numericPrice = Number(price);
+    if (isNaN(numericPrice)) {
+      console.log('Price is not a valid number');
       return '0.00';
     }
-    if (price < 0.000001) {
-      const zeros = Math.floor(Math.log10(price));
-      const formatted = `0.0${zeros}${price.toFixed(6)}`;
+    if (numericPrice < 0.000001) {
+      const zeros = Math.floor(Math.log10(numericPrice));
+      const formatted = `0.0${zeros}${numericPrice.toFixed(6)}`;
       console.log('Formatted small price:', formatted);
       return formatted;
     }
-    const formatted = price.toFixed(6);
+    const formatted = numericPrice.toFixed(6);
     console.log('Formatted normal price:', formatted);
     return formatted;
   }, [price]);
