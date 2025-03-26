@@ -105,10 +105,14 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
       // Count the number of zeros after the decimal point
       const priceStr = numericPrice.toFixed(6);
       const match = priceStr.match(/^0\.0+/);
-      const zeros = match ? match[0].length - 2 : 0;
-      const formatted = `0.0${zeros}${numericPrice.toFixed(6)}`;
-      console.log('Formatted small price:', formatted);
-      return formatted;
+      if (match) {
+        // Subtract 2 to account for "0." prefix and 1 to exclude the first zero
+        const zeros = match[0].length - 3;
+        const significantDigits = priceStr.slice(match[0].length);
+        const formatted = `0.0${zeros}${significantDigits}`;
+        console.log('Formatted small price:', formatted);
+        return formatted;
+      }
     }
     const formatted = numericPrice.toFixed(6);
     console.log('Formatted normal price:', formatted);
