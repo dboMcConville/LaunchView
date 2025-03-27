@@ -115,7 +115,7 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
       const match = priceStr.match(/^0\.0+/);
       if (match) {
         // Count the number of zeros after the decimal point (excluding the first zero)
-        const zeros = match[0].length - 2;
+        const zeros = match[0].length - 3; // Subtract 3 to account for "0." prefix and first zero
         // Get the significant digits after the zeros
         const significantDigits = priceStr.slice(match[0].length);
         // Convert number to subscript using Unicode subscript numbers
