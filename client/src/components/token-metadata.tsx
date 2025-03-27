@@ -104,23 +104,26 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
 
     // Convert to string with full precision
     const priceStr = numericPrice.toString();
-    const match = priceStr.match(/^0\.0+/);
+    console.log('Price string:', priceStr);
     
     // Handle small numbers with leading zeros
-    if (match && match[0].length > 2) {
-      // Count the number of zeros after the decimal point (excluding the first zero)
-      const zeros = match[0].length - 2;
-      // Get the significant digits after the zeros
-      const significantDigits = priceStr.slice(match[0].length);
-      // Convert number to subscript using Unicode subscript numbers
-      const subscriptNumber = zeros.toString().split('').map(digit => {
-        const subscriptDigits = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
-        return subscriptDigits[parseInt(digit)];
-      }).join('');
-      // Create the formatted string with subscript notation
-      const formatted = `0.0${subscriptNumber}${significantDigits}`;
-      console.log('Formatted small price:', formatted);
-      return formatted;
+    if (priceStr.startsWith('0.0')) {
+      const match = priceStr.match(/^0\.0+/);
+      if (match) {
+        // Count the number of zeros after the decimal point (excluding the first zero)
+        const zeros = match[0].length - 2;
+        // Get the significant digits after the zeros
+        const significantDigits = priceStr.slice(match[0].length);
+        // Convert number to subscript using Unicode subscript numbers
+        const subscriptNumber = zeros.toString().split('').map(digit => {
+          const subscriptDigits = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
+          return subscriptDigits[parseInt(digit)];
+        }).join('');
+        // Create the formatted string with subscript notation
+        const formatted = `0.0${subscriptNumber}${significantDigits}`;
+        console.log('Formatted small price:', formatted);
+        return formatted;
+      }
     }
 
     // For normal numbers, show 6 decimal places
