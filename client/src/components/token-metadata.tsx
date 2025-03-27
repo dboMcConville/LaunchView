@@ -116,17 +116,23 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
       if (match) {
         // Count the number of zeros after the decimal point (excluding the first zero)
         const zeros = match[0].length - 3; // Subtract 3 to account for "0." prefix and first zero
-        // Get the significant digits after the zeros
-        const significantDigits = priceStr.slice(match[0].length);
-        // Convert number to subscript using Unicode subscript numbers
-        const subscriptNumber = zeros.toString().split('').map(digit => {
-          const subscriptDigits = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
-          return subscriptDigits[parseInt(digit)];
-        }).join('');
-        // Create the formatted string with subscript notation
-        const formatted = `0.0${subscriptNumber}${significantDigits}`;
-        console.log('Formatted small price:', formatted);
-        return formatted;
+        // Only use subscript notation if there are 4 or more zeros
+        if (zeros >= 4) {
+          // Get the significant digits after the zeros
+          const significantDigits = priceStr.slice(match[0].length);
+          // Convert number to subscript using Unicode subscript numbers
+          const subscriptNumber = zeros.toString().split('').map(digit => {
+            const subscriptDigits = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
+            return subscriptDigits[parseInt(digit)];
+          }).join('');
+          // Create the formatted string with subscript notation
+          const formatted = `0.0${subscriptNumber}${significantDigits}`;
+          console.log('Formatted small price:', formatted);
+          return formatted;
+        } else {
+          // For 3 or fewer zeros, just return the original number
+          return numericPrice.toFixed(6);
+        }
       }
     }
 
@@ -231,7 +237,7 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
               </Button>
             </div>
             <div className="flex items-center gap-4 mt-2">
-              <span className="text-2xl font-semibold">
+              <span className="text-xl font-semibold">
                 ${formattedPrice}
               </span>
               <Button 
@@ -306,7 +312,7 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
               <CardContent className="pt-6">
                 <div className="grid gap-4">
                   <div>
-                    <h3 className="font-medium mb-1">Created</h3>
+                    <h3 className="text-sm font-medium mb-1">Created</h3>
                     <p className="text-sm">
                       {metadata?.created_at
                         ? getTimeAgo(metadata.created_at)
@@ -316,7 +322,7 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
 
                   {metadata?.tags && metadata.tags.length > 0 && (
                     <div>
-                      <h3 className="font-medium mb-1">Tags</h3>
+                      <h3 className="text-sm font-medium mb-1">Tags</h3>
                       <div className="flex gap-2 flex-wrap">
                         {metadata.tags.map((tag: string) => (
                           <span
