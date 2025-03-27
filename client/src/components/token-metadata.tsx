@@ -102,8 +102,12 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
       return '0.00';
     }
 
-    // Convert to string with full precision
-    const priceStr = numericPrice.toString();
+    // Convert to string with full precision, handling scientific notation
+    let priceStr = numericPrice.toString();
+    if (priceStr.includes('e')) {
+      // Convert scientific notation to decimal string
+      priceStr = numericPrice.toFixed(20).replace(/\.?0+$/, '');
+    }
     console.log('Price string:', priceStr);
     
     // Handle small numbers with leading zeros
