@@ -249,6 +249,29 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
                 View on DexScreener
               </Button>
             </div>
+            <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
+              <div>
+                <span className="font-medium">Created: </span>
+                {metadata?.created_at
+                  ? getTimeAgo(metadata.created_at)
+                  : "Unknown"}
+              </div>
+              {metadata?.tags && metadata.tags.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Tags:</span>
+                  <div className="flex gap-1">
+                    {metadata.tags.map((tag: string) => (
+                      <span
+                        key={tag}
+                        className="px-2 py-0.5 bg-secondary rounded-full text-xs"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -257,14 +280,14 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
       <div className="p-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
                 Market Cap
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-lg font-semibold">
                 {marketCap !== null
                   ? `$${Math.round(marketCap).toLocaleString()}`
                   : "Calculating..."}
@@ -273,83 +296,50 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
           </Card>
 
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <Users className="h-4 w-4" />
                 Holders
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-lg font-semibold">
                 {metadata?.holder_count?.toLocaleString() || "N/A"}
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <Wallet className="h-4 w-4" />
                 24h Volume
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-lg font-semibold">
                 ${Math.round(Number(metadata?.daily_volume || 0)).toLocaleString()}
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <Tabs defaultValue="overview" className="w-full">
+        <Tabs defaultValue="board" className="w-full">
           <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="holders">Holders</TabsTrigger>
-            <TabsTrigger value="transactions">Transactions</TabsTrigger>
+            <TabsTrigger value="board">Board of Directors</TabsTrigger>
+            <TabsTrigger value="chat">Community Chat</TabsTrigger>
           </TabsList>
-          <TabsContent value="overview" className="mt-6">
+          <TabsContent value="board" className="mt-6">
             <Card>
               <CardContent className="pt-6">
-                <div className="grid gap-4">
-                  <div>
-                    <h3 className="text-sm font-medium mb-1">Created</h3>
-                    <p className="text-sm">
-                      {metadata?.created_at
-                        ? getTimeAgo(metadata.created_at)
-                        : "Unknown"}
-                    </p>
-                  </div>
-
-                  {metadata?.tags && metadata.tags.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">Tags</h3>
-                      <div className="flex gap-2 flex-wrap">
-                        {metadata.tags.map((tag: string) => (
-                          <span
-                            key={tag}
-                            className="px-2 py-1 bg-secondary rounded-full text-xs"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <p className="text-muted-foreground">Board of Directors information coming soon...</p>
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="holders">
+          <TabsContent value="chat" className="mt-6">
             <Card>
               <CardContent className="pt-6">
-                <p className="text-muted-foreground">Holder data coming soon...</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="transactions">
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-muted-foreground">Transaction history coming soon...</p>
+                <p className="text-muted-foreground">Community chat coming soon...</p>
               </CardContent>
             </Card>
           </TabsContent>
