@@ -87,7 +87,7 @@ export default function LaunchPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Coin Details</CardTitle>
+            <CardTitle>Add a Coin</CardTitle>
             <CardDescription>
               Choose whether to add an existing coin or launch a new one
             </CardDescription>
@@ -95,8 +95,8 @@ export default function LaunchPage() {
           <CardContent>
             <Tabs defaultValue="add">
               <TabsList className="grid w-full grid-cols-2 mb-8">
-                <TabsTrigger value="add">Board of Directors</TabsTrigger>
-                <TabsTrigger value="launch">Community Chat</TabsTrigger>
+                <TabsTrigger value="add">Add Existing Coin</TabsTrigger>
+                <TabsTrigger value="launch">Add New Coin</TabsTrigger>
               </TabsList>
 
               <TabsContent value="add">
