@@ -8,7 +8,10 @@ import { TrendingUp, Users, BarChart2 } from "lucide-react";
 
 export default function CoinPage() {
   const { address } = useParams();
-  const { data: coin } = useQuery([`/api/coins/${address}`]);
+  const { data: coin } = useQuery({
+    queryKey: ['coin', address],
+    queryFn: () => fetch(`/api/coins/${address}`).then(res => res.json())
+  });
 
   return (
     <div className="flex min-h-screen">
