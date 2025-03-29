@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/hooks/use-auth";
 import { SidebarNav } from "@/components/ui/sidebar-nav";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -86,41 +85,7 @@ export default function LaunchPage() {
           </p>
         </div>
 
-        {/* KPIs Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" /> Market Cap
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg font-bold">$1,234,567</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Users className="h-4 w-4" /> Holders
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg font-bold">1,234</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <BarChart2 className="h-4 w-4" /> 24hr Volume
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg font-bold">$567,890</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card className="max-w-2xl">
+        <Card>
           <CardHeader>
             <CardTitle>Coin Details</CardTitle>
             <CardDescription>
