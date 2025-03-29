@@ -274,56 +274,45 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="p-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
-                Market Cap
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg font-semibold">
+        {/* KPI Cards in Header */}
+        <div className="grid grid-cols-3 gap-4 px-8 pb-6">
+          <div className="flex items-center gap-2 text-sm">
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <div>
+              <div className="text-xs text-muted-foreground">Market Cap</div>
+              <div className="font-medium">
                 {marketCap !== null
                   ? `$${Math.round(marketCap).toLocaleString()}`
                   : "Calculating..."}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Holders
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg font-semibold">
+          <div className="flex items-center gap-2 text-sm">
+            <Users className="h-4 w-4 text-muted-foreground" />
+            <div>
+              <div className="text-xs text-muted-foreground">Holders</div>
+              <div className="font-medium">
                 {metadata?.holder_count?.toLocaleString() || "N/A"}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Wallet className="h-4 w-4" />
-                24h Volume
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg font-semibold">
+          <div className="flex items-center gap-2 text-sm">
+            <Wallet className="h-4 w-4 text-muted-foreground" />
+            <div>
+              <div className="text-xs text-muted-foreground">24h Volume</div>
+              <div className="font-medium">
                 ${Math.round(Number(metadata?.daily_volume || 0)).toLocaleString()}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
+      </div>
 
+      {/* Main Content */}
+      <div className="p-8">
         <Tabs defaultValue="board" className="w-full">
           <TabsList>
             <TabsTrigger value="board">Board of Directors</TabsTrigger>
