@@ -235,18 +235,14 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
                   <Copy className="h-3 w-3" />
                 )}
               </Button>
-            </div>
-            <div className="flex items-center gap-4 mt-2">
-              <span className="text-xl font-semibold">
-                ${formattedPrice}
-              </span>
               <Button 
-                variant="outline" 
+                variant="ghost" 
                 size="sm"
+                className="h-6 text-xs"
                 onClick={() => window.open(`https://dexscreener.com/solana/${address}`, '_blank')}
               >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                View on DexScreener
+                <ExternalLink className="h-3 w-3 mr-1" />
+                DexScreener
               </Button>
             </div>
             <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
@@ -276,7 +272,7 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
         </div>
 
         {/* KPI Cards in Header */}
-        <div className="grid grid-cols-3 gap-4 px-8 pb-6">
+        <div className="grid grid-cols-4 gap-4 px-8 pb-6">
           <div className="flex items-center gap-2 text-sm">
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
             <div>
@@ -285,6 +281,16 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
                 {marketCap !== null
                   ? `$${Math.round(marketCap).toLocaleString()}`
                   : "Calculating..."}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 text-sm">
+            <Wallet className="h-4 w-4 text-muted-foreground" />
+            <div>
+              <div className="text-xs text-muted-foreground">Price</div>
+              <div className="font-medium">
+                ${formattedPrice}
               </div>
             </div>
           </div>
