@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/hooks/use-auth";
 import { SidebarNav } from "@/components/ui/sidebar-nav";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -12,6 +13,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
+import { TrendingUp, Users, BarChart2 } from "lucide-react";
 
 export default function LaunchPage() {
   const { user } = useAuth();
@@ -35,40 +37,38 @@ export default function LaunchPage() {
       const res = await apiRequest("POST", "/api/coins/add", { address: data.contractAddress });
       const coin = await res.json();
 
-      // Invalidate the coins query to trigger a refetch
-      queryClient.invalidateQueries({ queryKey: ["/api/coins"] });
       toast({
-        title: "Success",
-        description: "Coin has been added to LaunchView. A marketing wallet has been generated.",
+        title: "Coin Added",
+        description: `${coin.name} has been successfully added!`,
       });
-      navigate(`/coins/${coin.contractAddress}`);
+      queryClient.invalidateQueries(["/api/coins"]);
     } catch (error) {
       toast({
-        title: "Error",
-        description: (error as Error).message,
-        variant: "destructive",
+        title: "Error Adding Coin",
+        description: "There was an error adding the coin. Please try again.",
+        status: "error",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const launchNewCoin = async (data: any) => {
+  const launchNewCoin = async (data: { name: string; symbol: string }) => {
     setIsLoading(true);
     try {
-      const res = await apiRequest("POST", "/api/coins", data);
+      const res = await apiRequest("POST", "/api/coins/launch", data);
       const coin = await res.json();
-      queryClient.invalidateQueries({ queryKey: ["/api/coins"] });
+
       toast({
-        title: "Success",
-        description: "Your coin has been created successfully. A marketing wallet has been automatically generated.",
+        title: "Coin Launched",
+        description: `${coin.name} has been successfully launched!`,
       });
-      navigate(`/coins/${coin.marketingWalletAddress}`);
+      queryClient.invalidateQueries(["/api/coins"]);
     } catch (error) {
       toast({
-        title: "Error",
-        description: (error as Error).message,
-        variant: "destructive",
+        title: "Error Launching Coin",
+        description: "There was an error launching the coin. Please try again.",
+        status: "error",
       });
     } finally {
       setIsLoading(false);
@@ -86,6 +86,40 @@ export default function LaunchPage() {
           </p>
         </div>
 
+        {/* KPIs Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" /> Market Cap
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-lg font-bold">$1,234,567</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Users className="h-4 w-4" /> Holders
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-lg font-bold">1,234</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <BarChart2 className="h-4 w-4" /> 24hr Volume
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-lg font-bold">$567,890</div>
+            </CardContent>
+          </Card>
+        </div>
+
         <Card className="max-w-2xl">
           <CardHeader>
             <CardTitle>Coin Details</CardTitle>
@@ -96,8 +130,8 @@ export default function LaunchPage() {
           <CardContent>
             <Tabs defaultValue="add">
               <TabsList className="grid w-full grid-cols-2 mb-8">
-                <TabsTrigger value="add">Add Existing Coin</TabsTrigger>
-                <TabsTrigger value="launch">Launch New Coin</TabsTrigger>
+                <TabsTrigger value="add">Board of Directors</TabsTrigger>
+                <TabsTrigger value="launch">Community Chat</TabsTrigger>
               </TabsList>
 
               <TabsContent value="add">
