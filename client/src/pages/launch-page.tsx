@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/hooks/use-auth";
 import { SidebarNav } from "@/components/ui/sidebar-nav";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -35,39 +36,39 @@ export default function LaunchPage() {
     try {
       const res = await apiRequest("POST", "/api/coins/add", { address: data.contractAddress });
       const coin = await res.json();
-      queryClient.invalidateQueries(["/api/coins"]);
+
       toast({
-        title: "Success",
-        description: "Coin has been added to LaunchView",
+        title: "Coin Added",
+        description: `${coin.name} has been successfully added!`,
       });
-      navigate(`/coins/${coin.contractAddress}`);
+      queryClient.invalidateQueries(["/api/coins"]);
     } catch (error) {
       toast({
-        title: "Error",
-        description: (error as Error).message,
-        variant: "destructive",
+        title: "Error Adding Coin",
+        description: "There was an error adding the coin. Please try again.",
+        status: "error",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const launchNewCoin = async (data: any) => {
+  const launchNewCoin = async (data: { name: string; symbol: string }) => {
     setIsLoading(true);
     try {
-      const res = await apiRequest("POST", "/api/coins", data);
+      const res = await apiRequest("POST", "/api/coins/launch", data);
       const coin = await res.json();
-      queryClient.invalidateQueries(["/api/coins"]);
+
       toast({
-        title: "Success",
-        description: "Your coin has been created successfully",
+        title: "Coin Launched",
+        description: `${coin.name} has been successfully launched!`,
       });
-      navigate(`/coins/${coin.contractAddress}`);
+      queryClient.invalidateQueries(["/api/coins"]);
     } catch (error) {
       toast({
-        title: "Error",
-        description: (error as Error).message,
-        variant: "destructive",
+        title: "Error Launching Coin",
+        description: "There was an error launching the coin. Please try again.",
+        status: "error",
       });
     } finally {
       setIsLoading(false);
@@ -79,61 +80,121 @@ export default function LaunchPage() {
       <SidebarNav />
       <main className="flex-1 p-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">Launch Your Token</h1>
+          <h1 className="text-3xl font-bold">Launch</h1>
           <p className="text-muted-foreground">
-            Create or add your token to LaunchView
+            Add or launch your memecoin project on LaunchView
           </p>
         </div>
 
-        {/* KPI Stats Bar */}
-        <div className="flex gap-4 mb-8">
-          <div className="flex items-center gap-2 text-sm">
-            <TrendingUp className="h-4 w-4" />
-            <span className="font-medium">Market Cap:</span>
-            <span>$1.2M</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Users className="h-4 w-4" />
-            <span className="font-medium">Holders:</span>
-            <span>1,234</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <BarChart2 className="h-4 w-4" />
-            <span className="font-medium">24h Volume:</span>
-            <span>$567K</span>
-          </div>
+        {/* KPIs Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" /> Market Cap
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-lg font-bold">$1,234,567</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Users className="h-4 w-4" /> Holders
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-lg font-bold">1,234</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <BarChart2 className="h-4 w-4" /> 24hr Volume
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-lg font-bold">$567,890</div>
+            </CardContent>
+          </Card>
         </div>
 
         <Card className="max-w-2xl">
           <CardHeader>
             <CardTitle>Coin Details</CardTitle>
             <CardDescription>
-              View information about the coin's team and community
+              Choose whether to add an existing coin or launch a new one
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="directors">
+            <Tabs defaultValue="add">
               <TabsList className="grid w-full grid-cols-2 mb-8">
-                <TabsTrigger value="directors">Board of Directors</TabsTrigger>
-                <TabsTrigger value="chat">Community Chat</TabsTrigger>
+                <TabsTrigger value="add">Board of Directors</TabsTrigger>
+                <TabsTrigger value="launch">Community Chat</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="directors">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Board Members</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Information about the team will be displayed here
-                  </p>
-                </div>
+              <TabsContent value="add">
+                <form onSubmit={addForm.handleSubmit(addExistingCoin)} className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="ca">Contract Address</Label>
+                    <Input 
+                      id="ca" 
+                      {...addForm.register("contractAddress")} 
+                      placeholder="Enter the contract address of your coin"
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={isLoading}>
+                      Add to LaunchView
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => navigate("/")}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
               </TabsContent>
 
-              <TabsContent value="chat">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Community Discussion</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Chat interface will be implemented here
-                  </p>
-                </div>
+              <TabsContent value="launch">
+                <form onSubmit={launchForm.handleSubmit(launchNewCoin)} className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Coin Name</Label>
+                    <Input id="name" {...launchForm.register("name")} />
+                    {launchForm.formState.errors.name && (
+                      <p className="text-sm text-destructive">
+                        {String(launchForm.formState.errors.name.message)}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="symbol">Symbol</Label>
+                    <Input id="symbol" {...launchForm.register("symbol")} />
+                    {launchForm.formState.errors.symbol && (
+                      <p className="text-sm text-destructive">
+                        {String(launchForm.formState.errors.symbol.message)}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={isLoading}>
+                      Launch Coin
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => navigate("/")}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
               </TabsContent>
             </Tabs>
           </CardContent>

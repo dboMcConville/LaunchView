@@ -204,10 +204,9 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
 
   return (
     <div className="flex flex-col">
-      {/* Header Section with KPIs */}
+      {/* Header Section */}
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="px-8 py-6">
-          <div className="flex items-center gap-6 mb-6">
+        <div className="flex items-center gap-6 px-8 py-6">
           {metadata?.logoURI && (
             <img
               src={metadata.logoURI}
@@ -251,49 +250,12 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
               </Button>
             </div>
           </div>
-          
-          {/* Compact KPIs */}
-          <div className="flex gap-6 items-center">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Market Cap:</span>
-              <span className="text-sm">
-                {marketCap !== null ? `$${Math.round(marketCap).toLocaleString()}` : "Calculating..."}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Holders:</span>
-              <span className="text-sm">
-                {metadata?.holder_count?.toLocaleString() || "N/A"}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Created:</span>
-              <span className="text-sm">
-                {metadata?.created_at ? getTimeAgo(metadata.created_at) : "Unknown"}
-              </span>
-            </div>
-            {metadata?.tags && metadata.tags.length > 0 && (
-              <div className="flex items-center gap-2">
-                <Tag className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Tags:</span>
-                <div className="flex gap-1">
-                  {metadata.tags.map((tag: string) => (
-                    <span key={tag} className="px-2 py-0.5 bg-secondary rounded-full text-xs">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
-      {/* Board/Chat Content */}
-      <div className="px-8">
+      {/* Main Content */}
+      <div className="p-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium flex items-center gap-2">

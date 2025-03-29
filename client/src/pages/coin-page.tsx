@@ -1,60 +1,27 @@
-
-import { useParams } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
 import { SidebarNav } from "@/components/ui/sidebar-nav";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, Users, Clock, Tag } from "lucide-react";
+import { useParams } from "wouter";
 import { TokenMetadata } from "@/components/token-metadata";
 
 export default function CoinPage() {
+  // Get the address parameter from the URL
   const { address } = useParams<{ address: string }>();
 
+  // Render the TokenMetadata component with the address
   return (
     <div className="flex min-h-screen">
       <SidebarNav />
       <main className="flex-1">
         {address ? (
-          <div className="p-8">
-            <TokenMetadata address={address} />
-
-            {/* Main content tabs */}
-            <Tabs defaultValue="directors" className="mt-8">
-              <TabsList>
-                <TabsTrigger value="directors">Board of Directors</TabsTrigger>
-                <TabsTrigger value="chat">Community Chat</TabsTrigger>
-              </TabsList>
-
-        {/* Main content tabs */}
-        <Tabs defaultValue="directors" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="directors">Board of Directors</TabsTrigger>
-            <TabsTrigger value="chat">Community Chat</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="directors">
-            <Card>
-              <CardHeader>
-                <CardTitle>Board of Directors</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {/* Add Board of Directors content here */}
-                <p>Board members and voting information will be displayed here.</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="chat">
-            <Card>
-              <CardHeader>
-                <CardTitle>Community Chat</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {/* Add Community Chat content here */}
-                <p>Community discussion and updates will be displayed here.</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          <TokenMetadata address={address} />
+        ) : (
+          <div className="text-center p-8">
+            <h1 className="text-2xl font-bold mb-4">Invalid Address</h1>
+            <p className="text-muted-foreground">
+              No token address was provided.
+            </p>
+          </div>
+        )}
       </main>
     </div>
   );
