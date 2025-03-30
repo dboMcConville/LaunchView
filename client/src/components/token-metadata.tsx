@@ -272,7 +272,7 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
         </div>
 
         {/* KPI Cards in Header */}
-        <div className="grid grid-cols-4 gap-4 px-8 pb-6">
+        <div className="grid grid-cols-4 gap-2 px-4 pb-4">
           <div className="flex items-center gap-2 text-sm">
             <Wallet className="h-4 w-4 text-muted-foreground" />
             <div>
