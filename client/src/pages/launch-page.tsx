@@ -95,14 +95,14 @@ export default function LaunchPage() {
         </div>
 
         <Card>
-          <CardContent>
-            <Tabs defaultValue="add">
-              <TabsList className="grid w-full grid-cols-2 mb-8">
-                <TabsTrigger value="add">Existing Coin</TabsTrigger>
-                <TabsTrigger value="launch">New Coin</TabsTrigger>
+          <CardContent className="pt-6">
+            <Tabs defaultValue="existing" className="mb-6">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="existing">Existing Coin</TabsTrigger>
+                <TabsTrigger value="new">New Coin</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="add">
+              <TabsContent value="existing">
                 <form onSubmit={addForm.handleSubmit(addExistingCoin)} className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="ca">Contract Address</Label>
@@ -113,22 +113,15 @@ export default function LaunchPage() {
                     />
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex justify-end space-x-4">
                     <Button type="submit" disabled={isLoading}>
-                      Add to LaunchView
-                    </Button>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => navigate("/")}
-                    >
-                      Cancel
+                      {isLoading ? "Adding..." : "Add Coin"}
                     </Button>
                   </div>
                 </form>
               </TabsContent>
 
-              <TabsContent value="launch">
+              <TabsContent value="new">
                 <form onSubmit={launchForm.handleSubmit(launchNewCoin)} className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="name">Coin Name</Label>
@@ -150,16 +143,9 @@ export default function LaunchPage() {
                     )}
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex justify-end space-x-4">
                     <Button type="submit" disabled={isLoading}>
-                      Launch Coin
-                    </Button>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => navigate("/")}
-                    >
-                      Cancel
+                      {isLoading ? "Launching..." : "Launch Coin"}
                     </Button>
                   </div>
                 </form>
