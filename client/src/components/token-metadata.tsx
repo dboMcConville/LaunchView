@@ -109,7 +109,7 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
       priceStr = numericPrice.toFixed(20).replace(/\.?0+$/, '');
     }
     console.log('Price string:', priceStr);
-    
+
     // Handle small numbers with leading zeros
     if (priceStr.startsWith('0.0')) {
       const match = priceStr.match(/^0\.0+/);
@@ -273,6 +273,17 @@ export function TokenMetadata({ address }: TokenMetadataProps) {
 
         {/* KPI Cards in Header */}
         <div className="grid grid-cols-4 gap-4 px-8 pb-6">
+          <div className="flex items-center gap-2 text-sm">
+            <Wallet className="h-4 w-4 text-muted-foreground" />
+            <div>
+              <div className="text-xs text-muted-foreground">Community Wallet</div>
+              <div className="font-medium">
+                ${Number(metadata?.communityWalletBalance || 0).toLocaleString()}
+                <br/>
+                {Number(metadata?.communityWalletSolBalance || 0).toFixed(2)} SOL
+              </div>
+            </div>
+          </div>
           <div className="flex items-center gap-2 text-sm">
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
             <div>
