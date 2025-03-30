@@ -14,23 +14,32 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { TrendingUp, Users, BarChart2 } from "lucide-react";
 
+interface AddCoinFormData {
+  contractAddress: string;
+}
+
+interface LaunchCoinFormData {
+  name: string;
+  symbol: string;
+}
+
 export default function LaunchPage() {
   const { user } = useAuth();
   const [_, navigate] = useLocation();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  const addForm = useForm({
+  const addForm = useForm<AddCoinFormData>({
     defaultValues: {
       contractAddress: "",
     },
   });
 
-  const launchForm = useForm({
+  const launchForm = useForm<LaunchCoinFormData>({
     resolver: zodResolver(insertCoinSchema),
   });
 
-  const addExistingCoin = async (data: { contractAddress: string }) => {
+  const addExistingCoin = async (data: AddCoinFormData) => {
     setIsLoading(true);
     try {
       const res = await apiRequest("POST", "/api/coins/add", { address: data.contractAddress });
@@ -40,19 +49,19 @@ export default function LaunchPage() {
         title: "Coin Added",
         description: `${coin.name} has been successfully added!`,
       });
-      queryClient.invalidateQueries(["/api/coins"]);
+      queryClient.invalidateQueries({ queryKey: ["/api/coins"] });
     } catch (error) {
       toast({
         title: "Error Adding Coin",
         description: "There was an error adding the coin. Please try again.",
-        status: "error",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const launchNewCoin = async (data: { name: string; symbol: string }) => {
+  const launchNewCoin = async (data: LaunchCoinFormData) => {
     setIsLoading(true);
     try {
       const res = await apiRequest("POST", "/api/coins/launch", data);
@@ -62,12 +71,12 @@ export default function LaunchPage() {
         title: "Coin Launched",
         description: `${coin.name} has been successfully launched!`,
       });
-      queryClient.invalidateQueries(["/api/coins"]);
+      queryClient.invalidateQueries({ queryKey: ["/api/coins"] });
     } catch (error) {
       toast({
         title: "Error Launching Coin",
         description: "There was an error launching the coin. Please try again.",
-        status: "error",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -86,17 +95,11 @@ export default function LaunchPage() {
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Add a Coin</CardTitle>
-            <CardDescription>
-              Choose whether to add an existing coin or launch a new one
-            </CardDescription>
-          </CardHeader>
           <CardContent>
             <Tabs defaultValue="add">
               <TabsList className="grid w-full grid-cols-2 mb-8">
-                <TabsTrigger value="add">Add Existing Coin</TabsTrigger>
-                <TabsTrigger value="launch">Add New Coin</TabsTrigger>
+                <TabsTrigger value="add">Existing Coin</TabsTrigger>
+                <TabsTrigger value="launch">New Coin</TabsTrigger>
               </TabsList>
 
               <TabsContent value="add">
